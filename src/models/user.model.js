@@ -23,13 +23,11 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    phone: {
-      type: String,
-    },
     email: {
-      type: String,
-      required: true,
-      unique: true,
+      type: String, unique: true, sparse: true
+    },
+    phone: {
+      type: String, unique: true, sparse: true
     },
     password: {
       type: String,
@@ -42,7 +40,7 @@ const userSchema = new Schema(
     },
     address: [addressSchema],
     cart: [cartItemSchema],
-    oders: [
+    orders: [
       {
         type: Schema.Types.ObjectId,
         ref: "Order",
@@ -54,6 +52,9 @@ const userSchema = new Schema(
         ref: "Product",
       },
     ],
+    refreshToken: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
@@ -74,15 +75,15 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
+      username: this.username,
       fullname: this.fullname,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: ACCESS_TOKEN_EXPIRY,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };
-
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
@@ -90,7 +91,7 @@ userSchema.methods.generateRefreshToken = function () {
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_SECRET,
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
 };
