@@ -56,7 +56,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
 
     const product = await Product.findByIdAndUpdate(
         req.params.id,
-        { name, description, price, category, stock, productImages, isFeatured, ratings, reviews },
+        { name, description, price, category, stock, productImages, isFeatured, ratings},
         { new: true }
     );
 
