@@ -20,10 +20,12 @@ app.use(express.static("public"));
 import userRouter from "./routes/user.routes.js";
 import productRouter from "./routes/product.routes.js";
 import cartRouter from "./routes/cart.routes.js"; 
+import orderRouter from "./routes/order.routes.js"; // Import order routes
 
 // routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/cart", cartRouter); // Add cart routes
+app.use("/api/v1/orders", orderRouter); // Add order routes
 
 export { app };
