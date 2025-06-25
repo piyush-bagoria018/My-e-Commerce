@@ -3,7 +3,6 @@ import { asyncHandler } from "../utils/AsyncHandler.js"
 import jwt  from "jsonwebtoken"
 import { User } from "../models/user.model.js"
 
-
 export const verifyJWT = asyncHandler(async (req, _, next) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
@@ -26,3 +25,10 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
         throw new ApiError(400, error?.message || "Invalid access token")
     }
 })
+
+export const verifyAdmin = asyncHandler(async (req, _, next) => {
+    if (req.user.role !== "admin") {
+        throw new ApiError(403, "Access denied. Admins only.");
+    }
+    next();
+});
