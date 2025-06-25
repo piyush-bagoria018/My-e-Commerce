@@ -17,6 +17,12 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    priceHistory: [
+        {
+            date: { type: Date, default: Date.now },
+            price: { type: Number, required: true },
+        },
+    ],
     category: {
         type: String,
         required: true,
