@@ -1,0 +1,602 @@
+[
+  {
+    "name": "Levi's 511 Slim Fit Jeans",
+    "description": "Original Levi's 511 slim-fit stretch denim in dark blue wash for everyday wear.",
+    "price": 3499,
+    "category": "Men's Clothes",
+    "stock": 24,
+    "isFeatured": true,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "U.S. Polo Assn Men's Casual Shirt",
+    "description": "Classic U.S. Polo Assn checked casual shirt with breathable cotton fabric.",
+    "price": 2199,
+    "category": "Men's Clothes",
+    "stock": 31,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Nike Dri-FIT Training Tee",
+    "description": "Nike Dri-FIT moisture-wicking crew-neck t-shirt for gym and active training.",
+    "price": 1799,
+    "category": "Men's Clothes",
+    "stock": 27,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Allen Solly Men's Solid Polo",
+    "description": "Allen Solly solid polo t-shirt with stretch cotton and regular comfort fit.",
+    "price": 1399,
+    "category": "Men's Clothes",
+    "stock": 34,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Zara Satin Midi Dress",
+    "description": "Zara satin-finish midi dress with clean silhouette for brunch and evening wear.",
+    "price": 4590,
+    "category": "Women's Clothes",
+    "stock": 14,
+    "isFeatured": true,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Biba Printed Kurta Set",
+    "description": "Biba ethnic printed kurta set with matching dupatta and comfortable fit.",
+    "price": 2799,
+    "category": "Women's Clothes",
+    "stock": 20,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "H&M Ribbed Cotton Top",
+    "description": "H&M ribbed full-sleeve cotton top for versatile casual styling.",
+    "price": 999,
+    "category": "Women's Clothes",
+    "stock": 38,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "ONLY High-Rise Skinny Jeans",
+    "description": "ONLY high-rise skinny jeans with stretch denim and ankle-length fit.",
+    "price": 2399,
+    "category": "Women's Clothes",
+    "stock": 22,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Apple iPhone 15",
+    "description": "Apple iPhone 15 with A16 Bionic chip, Super Retina XDR display, and dynamic island.",
+    "price": 79900,
+    "category": "Phones",
+    "stock": 12,
+    "isFeatured": true,
+    "ratings": 4.8,
+    "productImages": []
+  },
+  {
+    "name": "Samsung Galaxy S24",
+    "description": "Samsung Galaxy S24 with advanced AI camera features and premium AMOLED display.",
+    "price": 74999,
+    "category": "Phones",
+    "stock": 15,
+    "isFeatured": true,
+    "ratings": 4.7,
+    "productImages": []
+  },
+  {
+    "name": "OnePlus 12",
+    "description": "OnePlus 12 flagship smartphone with Snapdragon processor and ultra-fast charging.",
+    "price": 64999,
+    "category": "Phones",
+    "stock": 18,
+    "isFeatured": false,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "Nothing Phone (2)",
+    "description": "Nothing Phone (2) with glyph interface, clean OS experience, and smooth OLED screen.",
+    "price": 44999,
+    "category": "Phones",
+    "stock": 17,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Apple MacBook Air M3",
+    "description": "Apple MacBook Air with M3 chip, 13-inch display, and all-day battery backup.",
+    "price": 114900,
+    "category": "Laptops",
+    "stock": 9,
+    "isFeatured": true,
+    "ratings": 4.8,
+    "productImages": []
+  },
+  {
+    "name": "Dell XPS 13",
+    "description": "Dell XPS 13 premium ultrabook with InfinityEdge display and Intel Core performance.",
+    "price": 109990,
+    "category": "Laptops",
+    "stock": 11,
+    "isFeatured": true,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "HP Spectre x360",
+    "description": "HP Spectre x360 convertible laptop with touchscreen and premium aluminum design.",
+    "price": 129999,
+    "category": "Laptops",
+    "stock": 8,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Lenovo IdeaPad Slim 5",
+    "description": "Lenovo IdeaPad Slim 5 with AMD Ryzen chipset and productivity-focused build.",
+    "price": 68999,
+    "category": "Laptops",
+    "stock": 16,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Apple Watch Series 9",
+    "description": "Apple Watch Series 9 GPS smartwatch with health tracking and seamless iPhone integration.",
+    "price": 41900,
+    "category": "SmartWatch",
+    "stock": 14,
+    "isFeatured": true,
+    "ratings": 4.7,
+    "productImages": []
+  },
+  {
+    "name": "Samsung Galaxy Watch6",
+    "description": "Samsung Galaxy Watch6 with advanced sleep coaching and body composition monitoring.",
+    "price": 32999,
+    "category": "SmartWatch",
+    "stock": 18,
+    "isFeatured": true,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "boAt Lunar Connect Pro",
+    "description": "boAt Lunar Connect Pro with Bluetooth calling, AMOLED display, and fitness modes.",
+    "price": 2999,
+    "category": "SmartWatch",
+    "stock": 42,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "Noise ColorFit Pro 5",
+    "description": "Noise ColorFit Pro 5 smartwatch featuring Tru Sync calling and long battery life.",
+    "price": 4499,
+    "category": "SmartWatch",
+    "stock": 35,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Sony WH-1000XM5",
+    "description": "Sony WH-1000XM5 flagship wireless headphones with industry-leading ANC.",
+    "price": 29990,
+    "category": "HeadPhones",
+    "stock": 10,
+    "isFeatured": true,
+    "ratings": 4.8,
+    "productImages": []
+  },
+  {
+    "name": "boAt Rockerz 550",
+    "description": "boAt Rockerz 550 over-ear wireless headphones with deep bass and 20-hour playback.",
+    "price": 2499,
+    "category": "HeadPhones",
+    "stock": 41,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "JBL Tune 760NC",
+    "description": "JBL Tune 760NC with active noise cancellation and Pure Bass sound.",
+    "price": 5999,
+    "category": "HeadPhones",
+    "stock": 26,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Apple AirPods Pro (2nd Gen)",
+    "description": "Apple AirPods Pro 2 with adaptive transparency and spatial audio experience.",
+    "price": 24900,
+    "category": "HeadPhones",
+    "stock": 13,
+    "isFeatured": true,
+    "ratings": 4.7,
+    "productImages": []
+  },
+  {
+    "name": "Sony PlayStation 5 Slim",
+    "description": "Sony PS5 Slim console with ultra-fast SSD and 4K gaming performance.",
+    "price": 54990,
+    "category": "Gaming",
+    "stock": 9,
+    "isFeatured": true,
+    "ratings": 4.8,
+    "productImages": []
+  },
+  {
+    "name": "Microsoft Xbox Series X",
+    "description": "Microsoft Xbox Series X with 1TB SSD and high-frame-rate next-gen gaming.",
+    "price": 52990,
+    "category": "Gaming",
+    "stock": 11,
+    "isFeatured": true,
+    "ratings": 4.7,
+    "productImages": []
+  },
+  {
+    "name": "Nintendo Switch OLED",
+    "description": "Nintendo Switch OLED model with vibrant display for portable and TV gaming.",
+    "price": 32999,
+    "category": "Gaming",
+    "stock": 14,
+    "isFeatured": false,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "Logitech G502 HERO",
+    "description": "Logitech G502 HERO wired gaming mouse with HERO sensor and adjustable weights.",
+    "price": 4995,
+    "category": "Gaming",
+    "stock": 29,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Canon EOS 1500D DSLR Camera",
+    "description": "Canon EOS 1500D DSLR with 24.1MP sensor and Wi-Fi connectivity.",
+    "price": 41999,
+    "category": "Electronics",
+    "stock": 12,
+    "isFeatured": true,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "GoPro HERO12 Black",
+    "description": "GoPro HERO12 Black action camera with 5.3K video and HyperSmooth stabilization.",
+    "price": 45999,
+    "category": "Electronics",
+    "stock": 10,
+    "isFeatured": true,
+    "ratings": 4.7,
+    "productImages": []
+  },
+  {
+    "name": "Amazon Echo Dot (5th Gen)",
+    "description": "Amazon Echo Dot 5th generation smart speaker with Alexa voice assistant.",
+    "price": 5499,
+    "category": "Electronics",
+    "stock": 39,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "TP-Link Archer C6 Router",
+    "description": "TP-Link Archer C6 dual-band Wi-Fi router for stable home and office network.",
+    "price": 2999,
+    "category": "Electronics",
+    "stock": 33,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Nivia Storm Football Size 5",
+    "description": "Nivia Storm size-5 stitched football for matches and daily practice sessions.",
+    "price": 899,
+    "category": "Sports",
+    "stock": 46,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "Yonex GR 303 Badminton Racquet",
+    "description": "Yonex GR 303 badminton racquet with durable graphite frame for control play.",
+    "price": 1199,
+    "category": "Sports",
+    "stock": 28,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "SG Club Cricket Bat",
+    "description": "SG Club Kashmir willow cricket bat suitable for tennis-ball and beginner leather play.",
+    "price": 1999,
+    "category": "Sports",
+    "stock": 21,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Cosco Super Volleyball",
+    "description": "Cosco Super volleyball with soft touch cover and durable stitching.",
+    "price": 1099,
+    "category": "Sports",
+    "stock": 30,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "Titan Raga Viva Analog Watch",
+    "description": "Titan Raga Viva women's analog watch with elegant dial and stainless-steel strap.",
+    "price": 6995,
+    "category": "Women's Fashion",
+    "stock": 19,
+    "isFeatured": true,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Charles & Keith Quilted Handbag",
+    "description": "Charles & Keith quilted shoulder handbag with premium finish for daily styling.",
+    "price": 6599,
+    "category": "Women's Fashion",
+    "stock": 17,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Skechers Go Walk Joy Shoes",
+    "description": "Skechers Go Walk Joy slip-on walking shoes with lightweight responsive cushioning.",
+    "price": 4999,
+    "category": "Women's Fashion",
+    "stock": 22,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Lavie Women's Tote Bag",
+    "description": "Lavie women's tote bag with spacious compartments for office and travel essentials.",
+    "price": 2399,
+    "category": "Women's Fashion",
+    "stock": 27,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "Fastrack 3242 Analog Watch",
+    "description": "Fastrack men's analog watch with sporty dial and everyday rugged build.",
+    "price": 2795,
+    "category": "Men's Fashion",
+    "stock": 29,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Puma Smash v2 Sneakers",
+    "description": "Puma Smash v2 casual sneakers with clean design and cushioned sole comfort.",
+    "price": 4599,
+    "category": "Men's Fashion",
+    "stock": 23,
+    "isFeatured": true,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Tommy Hilfiger Leather Wallet",
+    "description": "Tommy Hilfiger genuine leather wallet with card slots and premium stitched finish.",
+    "price": 3299,
+    "category": "Men's Fashion",
+    "stock": 18,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Wildcraft 29L Backpack",
+    "description": "Wildcraft 29-litre backpack with laptop compartment and water-resistant material.",
+    "price": 1999,
+    "category": "Men's Fashion",
+    "stock": 31,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Philips Air Fryer HD9200",
+    "description": "Philips Air Fryer HD9200 with rapid-air technology for low-oil everyday cooking.",
+    "price": 8999,
+    "category": "Home & Lifestyle",
+    "stock": 16,
+    "isFeatured": true,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "Prestige Svachh Pressure Cooker 5L",
+    "description": "Prestige Svachh 5-litre pressure cooker with deep-lid design and safety features.",
+    "price": 2299,
+    "category": "Home & Lifestyle",
+    "stock": 25,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Milton Thermosteel Flask 1L",
+    "description": "Milton Thermosteel flask with vacuum insulation for long hot and cold retention.",
+    "price": 999,
+    "category": "Home & Lifestyle",
+    "stock": 37,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "IKEA LACK Coffee Table",
+    "description": "IKEA LACK coffee table in modern minimalist design for living-room setup.",
+    "price": 3499,
+    "category": "Home & Lifestyle",
+    "stock": 13,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "Decathlon Quechua NH100 20L Backpack",
+    "description": "Decathlon Quechua NH100 20L hiking backpack for trekking and short outdoor trips.",
+    "price": 1499,
+    "category": "Sports & Outdoors",
+    "stock": 32,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "Adidas Resistance Band Set",
+    "description": "Adidas resistance band set for strength training, mobility work, and warm-up drills.",
+    "price": 1699,
+    "category": "Sports & Outdoors",
+    "stock": 26,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Nike Brasilia Training Duffel Bag",
+    "description": "Nike Brasilia medium duffel bag with durable base and multiple storage compartments.",
+    "price": 2895,
+    "category": "Sports & Outdoors",
+    "stock": 19,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Coleman 2-Person Camping Tent",
+    "description": "Coleman 2-person dome camping tent with weather-resistant build for quick setups.",
+    "price": 7499,
+    "category": "Sports & Outdoors",
+    "stock": 11,
+    "isFeatured": true,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "LEGO Classic Creative Bricks 10698",
+    "description": "LEGO Classic 10698 creative brick box with multiple colors and idea booklet.",
+    "price": 3199,
+    "category": "Baby & Toys",
+    "stock": 21,
+    "isFeatured": true,
+    "ratings": 4.8,
+    "productImages": []
+  },
+  {
+    "name": "Fisher-Price Laugh & Learn Puppy",
+    "description": "Fisher-Price interactive learning puppy toy with songs, lights, and early words.",
+    "price": 2699,
+    "category": "Baby & Toys",
+    "stock": 18,
+    "isFeatured": false,
+    "ratings": 4.6,
+    "productImages": []
+  },
+  {
+    "name": "Hot Wheels 5-Car Gift Pack",
+    "description": "Hot Wheels die-cast 5-car gift pack featuring assorted licensed mini car models.",
+    "price": 699,
+    "category": "Baby & Toys",
+    "stock": 44,
+    "isFeatured": false,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Mee Mee Baby Feeding Bottle 250ml",
+    "description": "Mee Mee BPA-free baby feeding bottle with anti-colic nipple and easy-grip design.",
+    "price": 349,
+    "category": "Baby & Toys",
+    "stock": 53,
+    "isFeatured": false,
+    "ratings": 4.2,
+    "productImages": []
+  },
+  {
+    "name": "L'Oreal Paris Hyaluronic Acid Serum",
+    "description": "L'Oreal Paris hyaluronic acid serum for intense hydration and skin plumping effect.",
+    "price": 799,
+    "category": "Health & Beauty",
+    "stock": 39,
+    "isFeatured": true,
+    "ratings": 4.5,
+    "productImages": []
+  },
+  {
+    "name": "Maybelline Fit Me Matte Foundation",
+    "description": "Maybelline Fit Me matte plus poreless liquid foundation with natural coverage.",
+    "price": 599,
+    "category": "Health & Beauty",
+    "stock": 48,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  },
+  {
+    "name": "The Derma Co 1% Hyaluronic Sunscreen",
+    "description": "The Derma Co SPF 50 sunscreen gel with lightweight, non-greasy broad-spectrum protection.",
+    "price": 499,
+    "category": "Health & Beauty",
+    "stock": 46,
+    "isFeatured": false,
+    "ratings": 4.3,
+    "productImages": []
+  },
+  {
+    "name": "Nivea Soft Light Moisturizer",
+    "description": "Nivea Soft all-purpose moisturizer with vitamin E and jojoba oil for daily hydration.",
+    "price": 349,
+    "category": "Health & Beauty",
+    "stock": 57,
+    "isFeatured": false,
+    "ratings": 4.4,
+    "productImages": []
+  }
+]
