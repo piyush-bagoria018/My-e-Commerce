@@ -4,6 +4,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+};
+
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -37,27 +44,35 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Ensure at least one (email or phone) is provided
-  if (![email, phone].some(field => field && typeof field === "string" && field.trim() !== "")) {
+  if (
+    ![email, phone].some(
+      (field) => field && typeof field === "string" && field.trim() !== ""
+    )
+  ) {
     throw new ApiError(400, "Either Email or Phone Number is required");
   }
 
-  // Build the query object dynamically based on provided fields
-  const query = {};
-  if (email) query.email = email;
-  if (phone) query.phone = phone;
+  const normalizedEmail = email?.trim() || null;
+  const normalizedPhone = phone?.trim() || null;
 
-  const existedUser = await User.findOne({
-    $or: [query],
-  });
+  if (normalizedEmail) {
+    const userWithEmail = await User.findOne({ email: normalizedEmail });
+    if (userWithEmail) {
+      throw new ApiError(400, "User with email already exists");
+    }
+  }
 
-  if (existedUser) {
-    throw new ApiError(400, "User with email or phone already exists");
+  if (normalizedPhone) {
+    const userWithPhone = await User.findOne({ phone: normalizedPhone });
+    if (userWithPhone) {
+      throw new ApiError(400, "User with phone already exists");
+    }
   }
 
   const user = await User.create({
     fullname,
-    email: email?.trim() || null,
-    phone: phone?.trim() || null,
+    ...(normalizedEmail && { email: normalizedEmail }),
+    ...(normalizedPhone && { phone: normalizedPhone }),
     password,
   });
 
@@ -75,16 +90,22 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, phone, password } = req.body;
   console.log("user", req.body);
 
-  if (!email) {
+  const normalizedEmail = email?.trim() || null;
+  const normalizedPhone = phone?.trim() || null;
+
+  if (!normalizedEmail && !normalizedPhone) {
     throw new ApiError(400, "email or phone is required");
   }
 
-  const user = await User.findOne({
-    $or: [{ email }]
-  });
+  let user = null;
+  if (normalizedEmail) {
+    user = await User.findOne({ email: normalizedEmail });
+  } else {
+    user = await User.findOne({ phone: normalizedPhone });
+  }
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
@@ -102,17 +123,14 @@ const loginUser = asyncHandler(async (req, res) => {
   console.log("access token", accessToken);
   console.log("refresh token", refreshToken);
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-
-  const options = {
-    httpOnly: true,
-    secure: true
-  };
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -137,25 +155,21 @@ const logoutUser = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  )
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+  );
 
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out Successfully"))
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(new ApiResponse(200, {}, "User logged out Successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(402, "Unauthorized Request");
+    throw new ApiError(401, "Unauthorized Request");
   }
 
   try {
@@ -174,29 +188,24 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Refresh Token is Expired or Used");
     }
 
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
-
-    const { accessToken, newrefreshToken } =
+    const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newrefreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,
-          { accessToken, newrefreshToken },
+          { accessToken, refreshToken: newRefreshToken },
           "Access Token Refreshed"
         )
       );
   } catch (error) {
     throw new ApiError(400, error?.message || "Invalid Refresh Token");
   }
-})
+});
 
 const changeCurrentUserPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -213,11 +222,7 @@ const changeCurrentUserPassword = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200, {}, "Password Changed Successfully"
-      )
-    )
+    .json(new ApiResponse(200, {}, "Password Changed Successfully"));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
@@ -254,7 +259,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedUser, "Account details updated successfully"));
+    .json(
+      new ApiResponse(200, updatedUser, "Account details updated successfully")
+    );
 });
 
 export {
@@ -264,5 +271,5 @@ export {
   refreshAccessToken,
   changeCurrentUserPassword,
   getCurrentUser,
-  updateAccountDetails
+  updateAccountDetails,
 };

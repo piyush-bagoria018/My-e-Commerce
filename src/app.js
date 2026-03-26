@@ -24,6 +24,7 @@ import orderRouter from "./routes/order.routes.js"; // Import order routes
 import paymentRouter from './routes/payment.routes.js'; // Import payment routes
 import adminRouter from "./routes/admin.routes.js"; // Import admin routes
 import wishlistRouter from "./routes/wishlist.routes.js"; // Import wishlist routes
+import priceTrackingRouter from "./routes/priceTracking.routes.js";
 
 // routes declaration
 app.use("/api/v1/users", userRouter);
@@ -33,5 +34,20 @@ app.use("/api/v1/orders", orderRouter); // Add order routes
 app.use('/api/v1/payments', paymentRouter); // Add payment routes
 app.use("/api/v1/admin", adminRouter); // Add admin routes
 app.use("/api/v1/wishlist", wishlistRouter); // Add wishlist routes
+app.use("/api/v1/price-tracking", priceTrackingRouter);
+
+// Global error handler middleware
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  const data = err.data || null;
+
+  res.status(statusCode).json({
+    statuscode: statusCode,
+    data: data,
+    message: message,
+    success: statusCode < 400,
+  });
+});
 
 export { app };
