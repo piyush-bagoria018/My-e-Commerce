@@ -5,6 +5,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import Order from '../models/order.model.js';
 import Payment from '../models/payment.model.js'; // Import Payment model
+import { User } from '../models/user.model.js';
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -24,8 +25,16 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Order not found');
     }
 
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user._id) {
         throw new ApiError(401, 'User not authenticated');
+    }
+
+    const requester = await User.findById(req.user._id).select('role');
+    if (!requester) {
+        throw new ApiError(401, 'User not authenticated');
+    }
+    if (requester.role !== 'admin' && String(order.user) !== String(req.user._id)) {
+        throw new ApiError(403, 'Access denied');
     }
 
     try {
@@ -40,7 +49,7 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
         // Save payment information in the database
         const payment = new Payment({
             order: order._id,
-            user: req.user.id,
+            user: req.user._id,
             paymentIntentId: razorpayOrder.id,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
@@ -59,6 +68,10 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
 export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, 'User not authenticated');
+    }
+
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
         throw new ApiError(400, 'All payment verification fields are required');
     }
@@ -75,6 +88,18 @@ export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
     const payment = await Payment.findOne({ paymentIntentId: razorpay_order_id });
     if (!payment) {
         throw new ApiError(404, 'Payment record not found');
+    }
+
+    const requester = await User.findById(req.user._id).select('role');
+    if (!requester) {
+        throw new ApiError(401, 'User not authenticated');
+    }
+    if (requester.role !== 'admin' && String(payment.user) !== String(req.user._id)) {
+        throw new ApiError(403, 'Access denied');
+    }
+
+    if (payment.status === 'succeeded') {
+        return res.status(200).json(new ApiResponse(200, {}, 'Payment already verified'));
     }
 
     payment.status = 'succeeded';

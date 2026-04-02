@@ -1,18 +1,19 @@
 import express from 'express';
 import { addToCart, getCart, updateCart, removeFromCart } from '../controllers/cart.controller.js';
+import { verifyJWT } from '../middlewares/auth.middlerware.js';
 
 const router = express.Router();
 
 router.route('/add')
-    .post(addToCart);
+    .post(verifyJWT, addToCart);
 
 router.route('/:userId')
-    .get(getCart);
+    .get(verifyJWT, getCart);
 
 router.route('/update/:productId')
-    .put(updateCart);
+    .put(verifyJWT, updateCart);
 
 router.route('/remove/:productId')
-    .delete(removeFromCart);
+    .delete(verifyJWT, removeFromCart);
 
 export default router;

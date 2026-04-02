@@ -4,6 +4,21 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/Cloudinary.js';
 
+const toNumberOrThrow = (value, fieldName) => {
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) {
+    throw new ApiError(400, `Invalid ${fieldName}`);
+  }
+  return parsed;
+};
+
+const toBooleanOrThrow = (value, fieldName) => {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  throw new ApiError(400, `Invalid ${fieldName}`);
+};
+
 export const createProduct = asyncHandler(async (req, res, next) => {
   const { name, description, price, category, stock, isFeatured, ratings } = req.body;
   let productImages = [];
@@ -61,17 +76,22 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
   }
 
   // Update price history only if the price has changed
-  if (price && price !== product.price) {
-    product.priceHistory.push({ date: new Date(), price });
+  if (typeof price !== 'undefined') {
+    const parsedPrice = toNumberOrThrow(price, 'price');
+    if (parsedPrice !== product.price) {
+      product.priceHistory.push({ date: new Date(), price: parsedPrice });
+    }
+    product.price = parsedPrice;
   }
 
-  product.name = name || product.name;
-  product.description = description || product.description;
-  product.price = price || product.price;
-  product.category = category || product.category;
-  product.stock = stock || product.stock;
-  product.isFeatured = isFeatured || product.isFeatured;
-  product.ratings = ratings || product.ratings;
+  if (typeof name !== 'undefined') product.name = name;
+  if (typeof description !== 'undefined') product.description = description;
+  if (typeof category !== 'undefined') product.category = category;
+  if (typeof stock !== 'undefined') product.stock = toNumberOrThrow(stock, 'stock');
+  if (typeof isFeatured !== 'undefined') {
+    product.isFeatured = toBooleanOrThrow(isFeatured, 'isFeatured');
+  }
+  if (typeof ratings !== 'undefined') product.ratings = toNumberOrThrow(ratings, 'ratings');
   product.productImages = productImages.length > 0 ? productImages : product.productImages;
 
   await product.save();
