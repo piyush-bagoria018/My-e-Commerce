@@ -6,6 +6,21 @@ import Product from "../models/product.model.js";
 import Order from "../models/order.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/Cloudinary.js";
 
+const toNumberOrThrow = (value, fieldName) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) {
+        throw new ApiError(400, `Invalid ${fieldName}`);
+    }
+    return parsed;
+};
+
+const toBooleanOrThrow = (value, fieldName) => {
+    if (typeof value === "boolean") return value;
+    if (value === "true") return true;
+    if (value === "false") return false;
+    throw new ApiError(400, `Invalid ${fieldName}`);
+};
+
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
     // Fetch only users with the role "user"
@@ -74,15 +89,31 @@ export const updateProduct = asyncHandler(async (req, res) => {
         }
     }
 
-    const product = await Product.findByIdAndUpdate(
-        req.params.productId,
-        { name, description, price, category, stock, productImages, isFeatured, ratings },
-        { new: true }
-    );
+    const product = await Product.findById(req.params.productId);
 
     if (!product) {
         throw new ApiError(404, "Product not found");
     }
+
+    if (typeof price !== "undefined") {
+        const parsedPrice = toNumberOrThrow(price, "price");
+        if (parsedPrice !== product.price) {
+            product.priceHistory.push({ date: new Date(), price: parsedPrice });
+        }
+        product.price = parsedPrice;
+    }
+
+    if (typeof name !== "undefined") product.name = name;
+    if (typeof description !== "undefined") product.description = description;
+    if (typeof category !== "undefined") product.category = category;
+    if (typeof stock !== "undefined") product.stock = toNumberOrThrow(stock, "stock");
+    if (typeof isFeatured !== "undefined") {
+        product.isFeatured = toBooleanOrThrow(isFeatured, "isFeatured");
+    }
+    if (typeof ratings !== "undefined") product.ratings = toNumberOrThrow(ratings, "ratings");
+    product.productImages = productImages.length > 0 ? productImages : product.productImages;
+
+    await product.save();
 
     res.status(200).json(new ApiResponse(200, product, "Product updated successfully"));
 });
@@ -103,5 +134,3 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
     res.status(200).json(new ApiResponse(200, null, "Product deleted successfully"));
 });
-
-

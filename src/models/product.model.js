@@ -54,12 +54,12 @@ const productSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Generate slug from name before saving
-productSchema.pre('save', function(next) {
+// Generate slug from name before saving.
+// Use promise-style middleware to avoid callback signature issues.
+productSchema.pre('save', function() {
     if (this.isModified('name')) {
         this.slug = slugify(this.name, { lower: true, strict: true });
     }
-    next();
 });
 
 const Product = mongoose.model('Product', productSchema);
