@@ -11,12 +11,14 @@ const connectDB = async () => {
   console.log("MongoDB connected");
 };
 
+const PRICE_HISTORY_DAYS = 90;
+
 const generatePriceHistory = (basePrice) => {
   const history = [];
   let currentPrice = basePrice;
   const today = new Date();
 
-  for (let i = 60; i >= 0; i--) {
+  for (let i = PRICE_HISTORY_DAYS; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
 
