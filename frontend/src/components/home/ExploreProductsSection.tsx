@@ -1,15 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Container } from "../common/Container";
 import { ProductCard } from "../product/ProductCard";
 import { getAllProducts } from "@/services/product.service";
+import {
+  addToWishlist,
+  getWishlist,
+  removeFromWishlist,
+} from "@/services/wishlist.service";
+import { useAuth } from "@/components/auth/AuthProvider";
 import type { Product } from "@/types/product";
 
 export function ExploreProductsSection() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [busyProductId, setBusyProductId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -25,6 +36,46 @@ export function ExploreProductsSection() {
 
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) {
+      setWishlistIds([]);
+      return;
+    }
+
+    const loadWishlist = async () => {
+      try {
+        const data = await getWishlist();
+        setWishlistIds(data.products.map((item) => item._id));
+      } catch {
+        setWishlistIds([]);
+      }
+    };
+
+    loadWishlist();
+  }, [isAuthenticated, isLoading]);
+
+  const handleToggleWishlist = async (productId: string) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setBusyProductId(productId);
+      const isSaved = wishlistIds.includes(productId);
+
+      if (isSaved) {
+        await removeFromWishlist(productId);
+        setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      } else {
+        await addToWishlist(productId);
+        setWishlistIds((prev) => [...prev, productId]);
+      }
+    } finally {
+      setBusyProductId(null);
+    }
+  };
 
   const allProducts = useMemo(() => {
     return [...products]
@@ -74,6 +125,9 @@ export function ExploreProductsSection() {
                 imageUrl={item.productImages?.[0]}
                 href={`/products/${item._id}`}
                 badge={new Date(item.createdAt || 0).getTime() > Date.now() - 14 * 86400000 ? "New" : undefined}
+                isWishlisted={wishlistIds.includes(item._id)}
+                onToggleWishlist={() => handleToggleWishlist(item._id)}
+                actionBusy={busyProductId === item._id}
               />
             ))}
           </div>

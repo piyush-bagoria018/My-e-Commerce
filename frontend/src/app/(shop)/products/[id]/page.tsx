@@ -549,15 +549,15 @@ export default function ProductDetailsPage() {
           onClick={() => setIsInsightsOpen(false)}
         >
           <div
-            className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl border border-border bg-background p-4 shadow-2xl sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-none sm:w-full sm:max-w-115 sm:rounded-none sm:border-y-0 sm:border-r-0 sm:border-l sm:p-5"
+            className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-2xl border border-border bg-background p-4 shadow-2xl sm:inset-y-5 sm:right-5 sm:left-auto sm:h-[calc(100vh-2.5rem)] sm:max-h-none sm:w-full sm:max-w-240 sm:rounded-3xl sm:border sm:p-5"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-display text-lg font-semibold">Price Tracking Insights</h3>
+              <h3 className="font-display text-base font-semibold sm:text-lg">Price Tracking Insights</h3>
               <button
                 type="button"
                 onClick={() => setIsInsightsOpen(false)}
-                className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold transition hover:border-primary hover:text-primary"
+                className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold transition hover:border-primary hover:text-primary"
               >
                 Close
               </button>

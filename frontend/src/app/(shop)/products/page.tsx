@@ -220,21 +220,20 @@ export default function ProductsPage() {
 
     try {
       setBusyProductId(productId);
-      setActionMessage("");
 
       const isSaved = wishlistIds.includes(productId);
       if (isSaved) {
         await removeFromWishlist(productId);
         setWishlistIds((prev) => prev.filter((id) => id !== productId));
-        setActionMessage("Removed from wishlist.");
       } else {
         await addToWishlist(productId);
         setWishlistIds((prev) => [...prev, productId]);
-        setActionMessage("Added to wishlist.");
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update wishlist";
-      setActionMessage(message);
+      console.error(
+        "[WISHLIST] Failed to update wishlist:",
+        err instanceof Error ? err.message : err
+      );
     } finally {
       setBusyProductId(null);
     }

@@ -1,356 +1,745 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import {
-CategoryScale,
-Chart as ChartJS,
-Filler,
-Legend,
-LineElement,
-LinearScale,
-PointElement,
-Title,
-Tooltip,
-type ChartOptions,
-type ScriptableContext,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { getPriceHistory, getPriceRecommendation, getAIAnalysis } from '@/services/price-tracking.service';
-import type { PriceHistory, PriceRecommendation } from '@/types/price-tracking';
-import { PriceAlertForm } from './PriceAlertForm';
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Title,
+  Tooltip,
+  type ChartOptions,
+  type ScriptableContext,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import {
+  getPriceHistory,
+  getPriceRecommendation,
+  getAIAnalysis,
+} from "@/services/price-tracking.service";
+import type { PriceHistory, PriceRecommendation } from "@/types/price-tracking";
+import { PriceAlertForm } from "./PriceAlertForm";
 
 type PriceInsightsPanelProps = {
-productId: string;
-className?: string;
+  productId: string;
+  className?: string;
 };
 
-type RangeFilter = '30d' | '90d' | 'all';
+type RangeFilter = "30d" | "90d" | "180d";
 
 type AIAnalysis = {
-verdict: string;
-dropProbability: number;
-mlReason: string;
-aiExplanation: string;
-aiConfidence: string;
-fairRange: { low: number; high: number };
-currentPrice: number;
+  verdict: string;
+  dropProbability: number;
+  mlReason: string;
+  aiExplanation: string;
+  aiConfidence: string;
+  fairRange: { low: number; high: number };
+  currentPrice: number;
 };
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
-
-function getConfidenceStyle(confidence: string) {
-if (confidence === 'high') return 'bg-accent/10 text-accent border-accent/30';
-if (confidence === 'medium') return 'bg-amber-50 text-amber-700 border-amber-200';
-return 'bg-slate-100 text-slate-700 border-slate-300';
-}
-
-function getVerdictStyle(verdict: string) {
-if (verdict.toLowerCase().includes('buy')) return 'text-accent';
-if (verdict.toLowerCase().includes('wait')) return 'text-amber-700';
-return 'text-foreground';
-}
-
-export function PriceInsightsPanel({ productId, className }: PriceInsightsPanelProps) {
-const [recommendation, setRecommendation] = useState<PriceRecommendation | null>(null);
-const [historyData, setHistoryData] = useState<PriceHistory | null>(null);
-const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
-const [range, setRange] = useState<RangeFilter>('90d');
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState('');
-
-const chartModel = useMemo(() => {
-const source = historyData?.graphData?.length ? historyData.graphData : historyData?.history || [];
-if (source.length < 2) {
-return null;
-}
-
-const now = Date.now();
-const rangeDays = range === '30d' ? 30 : range === '90d' ? 90 : 10000;
-const cutoffTime = now - rangeDays * 24 * 60 * 60 * 1000;
-
-const normalizedSource = source
-.map((point) => ({
-price: Number(point.price),
-date: point.date,
-timestamp: new Date(point.date).getTime(),
-}))
-.filter((point) => Number.isFinite(point.price));
-
-const filtered =
-range === 'all'
-? normalizedSource
-: normalizedSource.filter((point) => Number.isFinite(point.timestamp) && point.timestamp >= cutoffTime);
-
-const chartPointsSource = filtered.length >= 2 ? filtered : normalizedSource.slice(-Math.min(8, normalizedSource.length));
-if (chartPointsSource.length < 2) {
-return null;
-}
-
-const prices = chartPointsSource.map((point) => point.price);
-const labels = chartPointsSource.map((point) => {
-const parsedDate = new Date(point.date);
-if (Number.isNaN(parsedDate.getTime())) return 'N/A';
-return parsedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-});
-const minPrice = Math.min(...prices);
-const maxPrice = Math.max(...prices);
-
-const startPrice = chartPointsSource[0].price;
-const endPrice = chartPointsSource[chartPointsSource.length - 1].price;
-const trendPercent = ((endPrice - startPrice) / Math.max(startPrice, 1)) * 100;
-
-return {
-labels,
-prices,
-trendPercent,
-minPrice,
-maxPrice,
-};
-}, [historyData, range]);
-
-const chartData = useMemo(() => {
-if (!chartModel) return null;
-
-return {
-labels: chartModel.labels,
-datasets: [
-{
-label: 'Price',
-data: chartModel.prices,
-fill: true,
-borderColor: '#ea5b2a',
-pointRadius: 2,
-pointHoverRadius: 4,
-borderWidth: 3,
-tension: 0.35,
-backgroundColor: (context: ScriptableContext<'line'>) => {
-const chart = context.chart;
-const { ctx, chartArea } = chart;
-if (!chartArea) {
-return 'rgba(234, 91, 42, 0.14)';
-}
-
-const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-gradient.addColorStop(0, 'rgba(234, 91, 42, 0.28)');
-gradient.addColorStop(1, 'rgba(234, 91, 42, 0.04)');
-return gradient;
-},
-},
-],
-};
-}, [chartModel]);
-
-const chartOptions = useMemo<ChartOptions<'line'>>(
-() => ({
-responsive: true,
-maintainAspectRatio: false,
-interaction: {
-mode: 'index',
-intersect: false,
-},
-plugins: {
-legend: {
-display: false,
-},
-tooltip: {
-displayColors: false,
-callbacks: {
-title: (items) => items[0]?.label || '',
-label: (item) => {
-const yValue = typeof item.parsed.y === 'number' ? item.parsed.y : 0;
-return `Rs ${Math.round(yValue)}`;
-},
-},
-},
-},
-scales: {
-x: {
-grid: {
-display: false,
-},
-ticks: {
-maxTicksLimit: 6,
-color: '#72808d',
-font: {
-size: 10,
-},
-},
-},
-y: {
-grid: {
-color: 'rgba(114, 128, 141, 0.14)',
-},
-ticks: {
-color: '#72808d',
-font: {
-size: 10,
-},
-callback: (value) => `Rs ${value}`,
-},
-},
-},
-}),
-[]
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
 );
 
-useEffect(() => {
-let isCancelled = false;
-
-const loadRecommendation = async () => {
-try {
-setLoading(true);
-setError('');
-const [recommendationResult, historyResult, aiResult] = await Promise.allSettled([
-getPriceRecommendation(productId),
-getPriceHistory(productId),
-getAIAnalysis(productId),
-]);
-
-if (recommendationResult.status !== 'fulfilled') {
-throw recommendationResult.reason;
+function formatRs(value: number) {
+  return `Rs ${Math.round(value).toLocaleString("en-IN")}`;
 }
 
-if (!isCancelled) {
-setRecommendation(recommendationResult.value);
-setHistoryData(historyResult.status === 'fulfilled' ? historyResult.value : null);
-setAiAnalysis(aiResult.status === 'fulfilled' ? aiResult.value : null);
-}
-} catch (err) {
-if (!isCancelled) {
-const message = err instanceof Error ? err.message : 'Failed to load price insights';
-setError(message);
-}
-} finally {
-if (!isCancelled) {
-setLoading(false);
-}
-}
-};
-
-loadRecommendation();
-
-return () => {
-isCancelled = true;
-};
-}, [productId]);
-
-if (loading) {
-return (
-<div className={`rounded-xl border border-border bg-surface p-4 ${className || 'mt-6'}`}>
-<p className="text-sm font-semibold">Price Insights</p>
-<div className="mt-3 h-6 w-32 animate-pulse rounded bg-background" />
-<div className="mt-2 h-4 w-full animate-pulse rounded bg-background" />
-<div className="mt-2 h-4 w-5/6 animate-pulse rounded bg-background" />
-<div className="mt-4 h-28 animate-pulse rounded-lg bg-background" />
-</div>
-);
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
-if (error || !recommendation) {
-return (
-<div className={`rounded-xl border border-border bg-surface p-4 ${className || 'mt-6'}`}>
-<p className="text-sm font-semibold">Price Insights</p>
-<p className="mt-2 text-xs text-muted">{error || 'Price insights not available right now.'}</p>
-</div>
-);
+function getConfidenceTone(confidence: string) {
+  if (confidence === "high") {
+    return {
+      badge: "bg-[#dff5ee] text-[#1f5449] border-[#8fd4bf]",
+      bar: "bg-[#5fd0b8]",
+    };
+  }
+
+  if (confidence === "medium") {
+    return {
+      badge: "bg-[#f5eedb] text-[#7f5417] border-[#e7c37c]",
+      bar: "bg-[#f0b64d]",
+    };
+  }
+
+  return {
+    badge: "bg-[#efdfdf] text-[#8a4747] border-[#e0b3b3]",
+    bar: "bg-[#dd8c8c]",
+  };
 }
 
-return (
-<div className={`group rounded-xl border border-border bg-surface p-4 transition-shadow duration-300 hover:shadow-[0_10px_35px_-18px_rgba(14,165,233,0.45)] sm:p-5 ${className || 'mt-6'}`}>
-<div className="flex flex-wrap items-center justify-between gap-3">
-<p className="text-sm font-semibold">Price Insights</p>
-<span
-className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide ${getConfidenceStyle(
-recommendation.confidence || 'low'
-)}`}
->
-Signal: {recommendation.confidence}
-</span>
-</div>
+function getVerdictTint(verdict: string) {
+  if (verdict.toLowerCase().includes("buy")) {
+    return {
+      pill: "bg-[#dff5ee] text-[#1f5449]",
+    };
+  }
 
-<p className={`mt-3 text-xl font-semibold ${getVerdictStyle(recommendation.verdict)}`}>
-{recommendation.verdict}
-</p>
+  if (verdict.toLowerCase().includes("wait")) {
+    return {
+      pill: "bg-[#f5eedb] text-[#7f5417]",
+    };
+  }
 
-{/* ML Reason */}
-<p className="mt-1 text-sm text-muted">{recommendation.reason}</p>
+  return {
+    pill: "bg-white/10 text-white",
+  };
+}
 
-{/* AI Explanation - Display prominently */}
-{aiAnalysis?.aiExplanation && (
-<div className="mt-3 rounded-lg bg-primary/5 border border-primary/20 p-3">
-<p className="text-xs font-semibold text-primary/70 uppercase tracking-wide">AI Analysis</p>
-<p className="mt-1 text-sm text-foreground">{aiAnalysis.aiExplanation}</p>
-</div>
-)}
+function DropGauge({ value }: { value: number }) {
+  const percent = clamp(value, 0, 100);
+  const angle = 180 - (percent / 100) * 180;
+  const radians = (angle * Math.PI) / 180;
+  const needleX = 100 + Math.cos(radians) * 58;
+  const needleY = 100 - Math.sin(radians) * 58;
 
-<div className="mt-4 rounded-lg border border-border bg-background p-3">
-<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-<p className="text-xs font-semibold uppercase tracking-wide text-muted">Price trend</p>
-<div className="inline-flex items-center rounded-md border border-border bg-surface p-1">
-{(['30d', '90d', 'all'] as RangeFilter[]).map((item) => (
-<button
-key={item}
-type="button"
-onClick={() => setRange(item)}
-className={`rounded px-2 py-1 text-xs font-semibold transition ${
-range === item
-? 'bg-primary text-white'
-: 'text-muted hover:text-foreground'
-}`}
->
-{item.toUpperCase()}
-</button>
-))}
-</div>
-</div>
+  return (
+    <div className="relative mx-auto h-36 w-full max-w-60">
+      <svg viewBox="0 0 200 120" className="h-full w-full overflow-visible">
+        <defs>
+          <linearGradient id="gaugeTrack" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f29a98" />
+            <stop offset="33%" stopColor="#f0b04d" />
+            <stop offset="66%" stopColor="#85d8a6" />
+            <stop offset="100%" stopColor="#59d0b8" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M 30 100 A 70 70 0 0 1 170 100"
+          fill="none"
+          stroke="rgba(255,255,255,0.10)"
+          strokeWidth="16"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 30 100 A 70 70 0 0 1 170 100"
+          fill="none"
+          stroke="url(#gaugeTrack)"
+          strokeWidth="16"
+          strokeLinecap="round"
+          strokeDasharray={`${(percent / 100) * 220} 220`}
+        />
+        <line
+          x1="100"
+          y1="100"
+          x2={needleX}
+          y2={needleY}
+          stroke="#f7f2e8"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+        />
+        <circle cx="100" cy="100" r="5.5" fill="#f7f2e8" />
+      </svg>
+    </div>
+  );
+}
 
-{chartModel ? (
-<div className="relative h-32 overflow-hidden rounded-md border border-border/70 bg-linear-to-b from-primary/5 to-transparent p-2">
-{chartData ? <Line data={chartData} options={chartOptions} /> : null}
-</div>
-) : (
-<p className="rounded-md border border-dashed border-border p-4 text-xs text-muted">
-Need more price history to render graph.
-</p>
-)}
+function StatPill({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-center">
+      <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">
+        {label}
+      </p>
+      <p className={`mt-1 text-sm font-semibold ${accent}`}>{value}</p>
+    </div>
+  );
+}
 
-{chartModel ? (
-<div className="mt-3 grid gap-2 text-xs text-muted sm:grid-cols-3">
-<p>
-Trend:{' '}
-<span className={`font-semibold ${chartModel.trendPercent <= 0 ? 'text-accent' : 'text-primary'}`}>
-{chartModel.trendPercent > 0 ? '+' : ''}
-{chartModel.trendPercent.toFixed(1)}%
-</span>
-</p>
-<p>
-Low: <span className="font-semibold text-foreground">Rs {Math.round(chartModel.minPrice)}</span>
-</p>
-<p>
-High: <span className="font-semibold text-foreground">Rs {Math.round(chartModel.maxPrice)}</span>
-</p>
-</div>
-) : null}
-</div>
+export function PriceInsightsPanel({
+  productId,
+  className,
+}: PriceInsightsPanelProps) {
+  const [recommendation, setRecommendation] =
+    useState<PriceRecommendation | null>(null);
+  const [historyData, setHistoryData] = useState<PriceHistory | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [range, setRange] = useState<RangeFilter>("90d");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-<div className="mt-4 grid gap-3 sm:grid-cols-2">
-<div className="rounded-lg border border-border bg-background px-3 py-3">
-<p className="text-[11px] uppercase tracking-wide text-muted">Drop Probability</p>
-<p className="mt-1 text-lg font-semibold">{recommendation.dropProbability}%</p>
-</div>
-<div className="rounded-lg border border-border bg-background px-3 py-3">
-<p className="text-[11px] uppercase tracking-wide text-muted">Fair Price Range</p>
-<p className="mt-1 text-lg font-semibold">
-Rs {recommendation.fairRange.low} - Rs {recommendation.fairRange.high}
-</p>
-</div>
-</div>
+  const chartModel = useMemo(() => {
+    const source = historyData?.graphData?.length
+      ? historyData.graphData
+      : historyData?.history || [];
+    if (source.length < 2) {
+      return null;
+    }
 
-<p className="mt-4 text-xs text-muted">
-Current tracked price: <span className="font-semibold text-foreground">Rs {recommendation.currentPrice}</span>
-</p>
+    const now = Date.now();
+    const rangeDays = range === "30d" ? 30 : range === "90d" ? 90 : 180;
+    const cutoffTime = now - rangeDays * 24 * 60 * 60 * 1000;
 
-<PriceAlertForm productId={productId} currentPrice={recommendation.currentPrice} />
-</div>
-);
+    const normalizedSource = source
+      .map((point) => ({
+        price: Number(point.price),
+        date: point.date,
+        timestamp: new Date(point.date).getTime(),
+      }))
+      .filter((point) => Number.isFinite(point.price));
+
+    const filtered = normalizedSource.filter(
+      (point) =>
+        Number.isFinite(point.timestamp) && point.timestamp >= cutoffTime
+    );
+
+    const chartPointsSource =
+      filtered.length >= 2
+        ? filtered
+        : normalizedSource.slice(-Math.min(8, normalizedSource.length));
+    if (chartPointsSource.length < 2) {
+      return null;
+    }
+
+    const prices = chartPointsSource.map((point) => point.price);
+    const labels = chartPointsSource.map((point) => {
+      const parsedDate = new Date(point.date);
+      if (Number.isNaN(parsedDate.getTime())) return "N/A";
+      return parsedDate.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+      });
+    });
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    const startPrice = chartPointsSource[0].price;
+    const endPrice = chartPointsSource[chartPointsSource.length - 1].price;
+    const trendPercent =
+      ((endPrice - startPrice) / Math.max(startPrice, 1)) * 100;
+
+    return {
+      labels,
+      prices,
+      trendPercent,
+      minPrice,
+      maxPrice,
+    };
+  }, [historyData, range]);
+
+  const chartData = useMemo(() => {
+    if (!chartModel) return null;
+
+    return {
+      labels: chartModel.labels,
+      datasets: [
+        {
+          label: "Price",
+          data: chartModel.prices,
+          fill: true,
+          borderColor: "#5fd0b8",
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          borderWidth: 3,
+          tension: 0.35,
+          backgroundColor: (context: ScriptableContext<"line">) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) {
+              return "rgba(95, 208, 184, 0.18)";
+            }
+
+            const gradient = ctx.createLinearGradient(
+              0,
+              chartArea.top,
+              0,
+              chartArea.bottom
+            );
+            gradient.addColorStop(0, "rgba(95, 208, 184, 0.28)");
+            gradient.addColorStop(1, "rgba(95, 208, 184, 0.04)");
+            return gradient;
+          },
+        },
+      ],
+    };
+  }, [chartModel]);
+
+  const chartOptions = useMemo<ChartOptions<"line">>(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          backgroundColor: "#171717",
+          titleColor: "#f7f2e8",
+          bodyColor: "#f7f2e8",
+          borderColor: "rgba(255,255,255,0.12)",
+          borderWidth: 1,
+          displayColors: false,
+          callbacks: {
+            title: (items) => items[0]?.label || "",
+            label: (item) => {
+              const yValue =
+                typeof item.parsed.y === "number" ? item.parsed.y : 0;
+              return `Rs ${Math.round(yValue)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            maxTicksLimit: 6,
+            color: "rgba(247, 242, 232, 0.65)",
+            font: {
+              size: 10,
+            },
+          },
+        },
+        y: {
+          grid: {
+            color: "rgba(255, 255, 255, 0.08)",
+          },
+          ticks: {
+            color: "rgba(247, 242, 232, 0.65)",
+            font: {
+              size: 10,
+            },
+            callback: (value) => `Rs ${value}`,
+          },
+        },
+      },
+    }),
+    []
+  );
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadRecommendation = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const [recommendationResult, historyResult, aiResult] =
+          await Promise.allSettled([
+            getPriceRecommendation(productId),
+            getPriceHistory(productId),
+            getAIAnalysis(productId),
+          ]);
+
+        if (recommendationResult.status !== "fulfilled") {
+          throw recommendationResult.reason;
+        }
+
+        if (!isCancelled) {
+          setRecommendation(recommendationResult.value);
+          setHistoryData(
+            historyResult.status === "fulfilled" ? historyResult.value : null
+          );
+          setAiAnalysis(
+            aiResult.status === "fulfilled" ? aiResult.value : null
+          );
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Failed to load price insights";
+          setError(message);
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadRecommendation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [productId]);
+
+  if (loading) {
+    return (
+      <div
+        className={`rounded-[28px] border border-white/10 bg-[#232323] p-5 text-[#f6f3ec] ${className || "mt-6"}`}
+      >
+        <div className="h-4 w-28 animate-pulse rounded-full bg-white/10" />
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1.4fr_0.95fr]">
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+            <div className="h-5 w-32 animate-pulse rounded-full bg-white/10" />
+            <div className="h-11 w-44 animate-pulse rounded-2xl bg-white/10" />
+            <div className="h-12 w-full animate-pulse rounded-2xl bg-white/10" />
+          </div>
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+            <div className="h-5 w-28 animate-pulse rounded-full bg-white/10" />
+            <div className="h-28 animate-pulse rounded-3xl bg-white/10" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recommendation) {
+    return (
+      <div
+        className={`rounded-[28px] border border-white/10 bg-[#232323] p-5 text-[#f6f3ec] ${className || "mt-6"}`}
+      >
+        <p className="text-sm font-semibold">Price Intelligence</p>
+        <p className="mt-2 text-xs text-[#d8d4cb]/75">
+          {error || "Price insights not available right now."}
+        </p>
+      </div>
+    );
+  }
+
+  const verdictTone = getVerdictTint(recommendation.verdict);
+  const confidenceTone = getConfidenceTone(recommendation.confidence || "low");
+  const currentPrice = recommendation.currentPrice;
+  const averagePrice = historyData?.average_price ?? currentPrice;
+  const lowestPrice = historyData?.lowest_price ?? currentPrice;
+  const highestPrice = historyData?.highest_price ?? currentPrice;
+  const priceVsAverage = averagePrice
+    ? ((currentPrice - averagePrice) / averagePrice) * 100
+    : 0;
+  const priceVsLow = lowestPrice
+    ? ((currentPrice - lowestPrice) / Math.max(lowestPrice, 1)) * 100
+    : 0;
+  const gaugeValue = clamp(recommendation.dropProbability, 0, 100);
+  const gaugeLabel =
+    gaugeValue >= 70 ? "strong" : gaugeValue >= 40 ? "moderate" : "weak";
+  const liveInsight = aiAnalysis?.aiExplanation || recommendation.reason;
+  const normalizedInsight = liveInsight
+    .replace(/lowest\s+ever/gi, "90-day low")
+    .replace(/all[-\s]*time/gi, "90-day");
+  const fairLowRaw = aiAnalysis?.fairRange?.low ?? averagePrice * 0.92;
+  const fairHighRaw = aiAnalysis?.fairRange?.high ?? averagePrice * 1.08;
+  const fairLow = Math.min(fairLowRaw, fairHighRaw);
+  const fairHigh = Math.max(fairLowRaw, fairHighRaw);
+  const domainLow = Math.min(lowestPrice, fairLow, currentPrice);
+  const domainHigh = Math.max(highestPrice, fairHigh, currentPrice);
+  const rangeSize = Math.max(domainHigh - domainLow, 1);
+  const markerLeft = clamp(
+    ((currentPrice - domainLow) / rangeSize) * 100,
+    0,
+    100
+  );
+  const fairStart = clamp(
+    ((fairLow - domainLow) / rangeSize) * 100,
+    0,
+    100
+  );
+  const fairEnd = clamp(
+    ((fairHigh - domainLow) / rangeSize) * 100,
+    0,
+    100
+  );
+  const fairBandWidth = Math.max(fairEnd - fairStart, 8);
+  const tolerance = Math.max(averagePrice * 0.005, 1);
+  const verdictLower = (recommendation.verdict || "").toLowerCase();
+  const isCautiousVerdict =
+    verdictLower.includes("wait") || verdictLower.includes("not ideal");
+  const isBelowFairRange = currentPrice < fairLow - tolerance;
+  const isAboveFairRange = currentPrice > fairHigh + tolerance;
+  const isNearUpperFairRange =
+    currentPrice >= fairHigh - tolerance && currentPrice <= fairHigh + tolerance;
+  const isNearLowerFairRange =
+    currentPrice <= fairLow + tolerance && currentPrice >= fairLow - tolerance;
+  const fairRangeMessage = isBelowFairRange
+    ? "Current price is below the fair range. This is an unusually strong deal based on recent price behavior."
+    : isAboveFairRange
+      ? "Current price is above the fair range. The chart suggests waiting for a better buying window."
+      : isNearUpperFairRange
+        ? "Current price is within the fair range but near its upper edge. Waiting may give a better entry."
+        : isNearLowerFairRange
+          ? "Current price is within the fair range and near its lower edge. This is a favorable buying zone."
+      : isCautiousVerdict
+        ? "Current price is within the fair range, but trend signals suggest waiting for a slightly better entry."
+        : "Current price falls within the fair range. Not the 90-day low, but a strong deal based on recent history.";
+
+  return (
+    <div
+      className={`rounded-[28px] border border-white/10 bg-[#232323] p-4.5 text-[#f6f3ec] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.75)] sm:p-5 ${className || "mt-6"}`}
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-[0.28em] text-[#d8d4cb]/65">
+          Price Intelligence
+        </p>
+        <span
+          className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${confidenceTone.badge}`}
+        >
+          Signal: {recommendation.confidence}
+        </span>
+      </div>
+
+      <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4.5 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+                Current Price
+              </p>
+              <div className="mt-1 flex flex-wrap items-end gap-2.5">
+                <p className="text-[2.7rem] font-semibold leading-none tracking-tight text-[#f7f2e8] sm:text-[3rem]">
+                  {formatRs(currentPrice)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-1.5 pt-1 text-right">
+              <span
+                className={`rounded-full px-4.5 py-2 text-sm font-semibold leading-none ${verdictTone.pill}`}
+              >
+                {recommendation.verdict}
+              </span>
+              <span className="rounded-full border border-[#f2d3bd]/25 bg-[#f7eadf] px-4 py-1.5 text-xs font-semibold text-[#8d5d2b]">
+                {Math.abs(priceVsAverage).toFixed(0)}% off average
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-[22px] border border-white/10 bg-[#171717] p-4">
+            <div className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/5 p-3.25">
+              <div className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#dff5ee] text-[#1f5449]">
+                <Image
+                  src="/Copilot_20260405_163707.png"
+                  alt="AI"
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                />
+              </div>
+              <p className="text-sm leading-relaxed text-[#f1efe7]">
+                {normalizedInsight}
+              </p>
+            </div>
+
+            <div className="mt-10 min-h-29.5 rounded-[18px] border border-white/10 bg-[#111111] p-4">
+              <div className="grid min-h-20.5 grid-cols-3 items-stretch gap-3">
+                <div className="flex h-full flex-col justify-start text-left">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8d4cb]/55">
+                    90d Low
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-[#59d0b8]">
+                    {formatRs(lowestPrice)}
+                  </p>
+                </div>
+
+                <div className="flex h-full translate-y-4 flex-col items-center justify-end text-center">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8d4cb]/55">
+                    90d Average
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-[#f7f2e8]">
+                    {formatRs(averagePrice)}
+                  </p>
+                </div>
+
+                <div className="flex h-full flex-col justify-start text-right">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8d4cb]/55">
+                    90d High
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-[#f28b82]">
+                    {formatRs(highestPrice)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4.5 sm:p-5">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+            Drop Signal
+          </p>
+          <DropGauge value={gaugeValue} />
+          <div className="-mt-1.5 text-center">
+            <p className="text-[2rem] font-semibold text-[#f7f2e8]">
+              {Math.round(gaugeValue)}%
+            </p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+              drop probability
+            </p>
+          </div>
+
+          <div className="mt-4 space-y-3.5">
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-[12px] text-[#d8d4cb]/75">
+                <span>price vs average</span>
+                <span
+                  className={
+                    priceVsAverage <= 0 ? "text-[#59d0b8]" : "text-[#f28b82]"
+                  }
+                >
+                  {priceVsAverage > 0 ? "+" : ""}
+                  {priceVsAverage.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full rounded-full ${priceVsAverage <= 0 ? "bg-[#59d0b8]" : "bg-[#f28b82]"}`}
+                  style={{
+                    width: `${clamp(Math.abs(priceVsAverage) * 7, 18, 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-[12px] text-[#d8d4cb]/75">
+                <span>price vs 90d low</span>
+                <span
+                  className={
+                    priceVsLow <= 0 ? "text-[#59d0b8]" : "text-[#f0b64d]"
+                  }
+                >
+                  {priceVsLow > 0 ? "+" : ""}
+                  {priceVsLow.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full rounded-full ${priceVsLow <= 0 ? "bg-[#59d0b8]" : "bg-[#f0b64d]"}`}
+                  style={{
+                    width: `${clamp(Math.abs(priceVsLow) * 5, 18, 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-[12px] text-[#d8d4cb]/75">
+                <span>model confidence</span>
+                <span className="capitalize text-[#f7f2e8]">{gaugeLabel}</span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full rounded-full ${confidenceTone.bar}`}
+                  style={{ width: `${clamp(gaugeValue, 28, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[28px] border border-white/10 bg-[#232323] p-3.5 sm:p-4.5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+              Price History
+            </p>
+            <p className="mt-1 text-sm text-[#d8d4cb]/80">90-day trend</p>
+          </div>
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 p-1">
+            {(["30d", "90d", "180d"] as RangeFilter[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setRange(item)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                  range === item
+                    ? "bg-[#e4572e] text-white shadow-[0_10px_24px_-18px_rgba(228,87,46,0.8)]"
+                    : "text-[#d8d4cb]/75 hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {chartModel ? (
+          <div className="rounded-[22px] border border-white/10 bg-[#1b1b1b] p-3.5">
+            <div className="relative h-52 overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,rgba(95,208,184,0.07)_0%,rgba(95,208,184,0)_100%)] p-2 sm:h-60">
+              {chartData ? (
+                <Line data={chartData} options={chartOptions} />
+              ) : null}
+            </div>
+            <div className="mt-3.5 grid gap-2.5 text-sm text-[#f6f3ec] sm:grid-cols-3">
+              <p>
+                Trend:{" "}
+                <span
+                  className={`font-semibold ${chartModel.trendPercent <= 0 ? "text-[#59d0b8]" : "text-[#f28b82]"}`}
+                >
+                  {chartModel.trendPercent > 0 ? "+" : ""}
+                  {chartModel.trendPercent.toFixed(1)}%
+                </span>
+              </p>
+              <p>
+                Low:{" "}
+                <span className="font-semibold text-[#f7f2e8]">
+                  {formatRs(chartModel.minPrice)}
+                </span>
+              </p>
+              <p>
+                High:{" "}
+                <span className="font-semibold text-[#f7f2e8]">
+                  {formatRs(chartModel.maxPrice)}
+                </span>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="rounded-[22px] border border-dashed border-white/10 bg-white/5 p-4 text-sm text-[#d8d4cb]/75">
+            Need more price history to render graph.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+        <div className="rounded-[28px] border border-white/10 bg-[#232323] p-3.5 sm:p-4.5">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+            Fair Price Range
+          </p>
+          <div className="mt-3.5 rounded-[22px] border border-white/10 bg-[#1b1b1b] p-3.5">
+            <div className="relative h-3 rounded-full bg-white/10">
+              <div
+                className="absolute inset-y-0 rounded-full bg-[#78cbb6]"
+                style={{ left: `${fairStart}%`, width: `${fairBandWidth}%` }}
+              />
+              <div
+                className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-[3px] border-[#1b1b1b] bg-[#78cbb6] shadow-[0_0_0_4px_rgba(120,203,182,0.18)]"
+                style={{ left: `calc(${markerLeft}% - 10px)` }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-sm text-[#f6f3ec]">
+              <span>{formatRs(fairLow)}</span>
+              <span className="font-semibold text-[#78cbb6]">
+                {formatRs(currentPrice)} now
+              </span>
+              <span>{formatRs(fairHigh)}</span>
+            </div>
+          </div>
+          <div className="mt-3.5 rounded-[20px] border border-white/8 bg-white/5 p-3 text-sm text-[#efece4]">
+            {fairRangeMessage}
+          </div>
+        </div>
+
+        <PriceAlertForm productId={productId} currentPrice={currentPrice} />
+      </div>
+    </div>
+  );
 }

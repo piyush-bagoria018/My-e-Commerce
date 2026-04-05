@@ -76,14 +76,14 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 	};
 
 	return (
-		<div className="mt-4 rounded-lg border border-border bg-background p-4">
-			<p className="text-sm font-semibold">Set Price Alert</p>
-			<p className="mt-1 text-xs text-muted">Get notified when the price drops to your target</p>
+		<div className="rounded-[22px] border border-white/10 bg-[#2b2b2b] p-4 text-[#f6f3ec] shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]">
+			<p className="text-xs uppercase tracking-[0.22em] text-[#d8d4cb]/75">Price Alert</p>
+			<p className="mt-2 text-sm text-[#efece4]">Set your target and we’ll notify you the moment the price drops below it.</p>
 
 			<form onSubmit={handleSubmit} className="mt-3 space-y-3">
 				{/* Email Input */}
 				<div>
-					<label htmlFor="alert-email" className="block text-xs font-medium text-foreground">
+					<label htmlFor="alert-email" className="block text-xs font-medium text-[#f6f3ec]">
 						Email
 					</label>
 					<input
@@ -93,15 +93,15 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						disabled={state === 'loading' || state === 'success'}
-						className="mt-1.5 w-full rounded border border-input bg-surface px-3 py-2 text-sm placeholder-muted transition disabled:opacity-50"
+						className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#1f1f1f] px-3 py-2.5 text-sm text-[#f6f3ec] placeholder:text-[#9c9587] transition focus:border-[#78cbb6] focus:outline-none disabled:opacity-50"
 					/>
 				</div>
 
 				{/* Target Price Input */}
 				<div>
-					<label htmlFor="alert-price" className="block text-xs font-medium text-foreground">
+					<label htmlFor="alert-price" className="block text-xs font-medium text-[#f6f3ec]">
 						Target Price (Rs)
-						<span className="float-right text-muted">Current: Rs {currentPrice}</span>
+						<span className="float-right text-[#d8d4cb]/70">Current: Rs {currentPrice.toLocaleString('en-IN')}</span>
 					</label>
 					<input
 						id="alert-price"
@@ -112,10 +112,10 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 						disabled={state === 'loading' || state === 'success'}
 						min="1"
 						max={currentPrice - 1}
-						className="mt-1.5 w-full rounded border border-input bg-surface px-3 py-2 text-sm placeholder-muted transition disabled:opacity-50"
+						className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#1f1f1f] px-3 py-2.5 text-sm text-[#f6f3ec] placeholder:text-[#9c9587] transition focus:border-[#78cbb6] focus:outline-none disabled:opacity-50"
 					/>
-					<p className="mt-1 text-xs text-muted">
-						You'll save: <span className="font-semibold text-accent">Rs {currentPrice - targetPrice}</span>
+					<p className="mt-1 text-xs text-[#d8d4cb]/70">
+						You’ll save: <span className="font-semibold text-[#86e3c8]">Rs {(currentPrice - targetPrice).toLocaleString('en-IN')}</span>
 					</p>
 				</div>
 
@@ -125,10 +125,10 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 					disabled={state === 'loading' || state === 'success'}
 					className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition ${
 						state === 'success'
-							? 'bg-accent/20 text-accent'
+							? 'bg-[#dff5ee] text-[#1f5449]'
 							: state === 'loading'
-								? 'bg-primary/50 text-white'
-								: 'bg-primary text-white hover:bg-primary/90'
+								? 'bg-[#c65b39] text-white'
+								: 'bg-[#e4572e] text-white hover:bg-[#c94a23]'
 					} disabled:cursor-not-allowed`}
 				>
 					{state === 'loading' ? 'Setting Alert...' : state === 'success' ? '✓ Alert Set!' : 'Set Alert'}
@@ -139,8 +139,8 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 					<div
 						className={`rounded-md px-3 py-2 text-xs font-medium ${
 							state === 'success'
-								? 'bg-accent/15 text-accent'
-								: 'bg-red-50 text-red-700'
+								? 'bg-[#dff5ee] text-[#1f5449]'
+								: 'bg-[#4a2520] text-[#ffd1c6]'
 						}`}
 					>
 						{message}

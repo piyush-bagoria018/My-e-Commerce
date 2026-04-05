@@ -1,15 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Container } from "../common/Container";
 import { SectionHeader } from "../common/SectionHeader";
 import { ProductCard } from "../product/ProductCard";
 import { getAllProducts } from "@/services/product.service";
+import {
+  addToWishlist,
+  getWishlist,
+  removeFromWishlist,
+} from "@/services/wishlist.service";
+import { useAuth } from "@/components/auth/AuthProvider";
 import type { Product } from "@/types/product";
 
 export function BestSellingSection() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [busyProductId, setBusyProductId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -25,6 +36,46 @@ export function BestSellingSection() {
 
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) {
+      setWishlistIds([]);
+      return;
+    }
+
+    const loadWishlist = async () => {
+      try {
+        const data = await getWishlist();
+        setWishlistIds(data.products.map((item) => item._id));
+      } catch {
+        setWishlistIds([]);
+      }
+    };
+
+    loadWishlist();
+  }, [isAuthenticated, isLoading]);
+
+  const handleToggleWishlist = async (productId: string) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setBusyProductId(productId);
+      const isSaved = wishlistIds.includes(productId);
+
+      if (isSaved) {
+        await removeFromWishlist(productId);
+        setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      } else {
+        await addToWishlist(productId);
+        setWishlistIds((prev) => [...prev, productId]);
+      }
+    } finally {
+      setBusyProductId(null);
+    }
+  };
 
   const bestSellingProducts = useMemo(() => {
     return [...products]
@@ -66,6 +117,9 @@ export function BestSellingSection() {
                 imageLabel={item.category}
                 imageUrl={item.productImages?.[0]}
                 href={`/products/${item._id}`}
+                isWishlisted={wishlistIds.includes(item._id)}
+                onToggleWishlist={() => handleToggleWishlist(item._id)}
+                actionBusy={busyProductId === item._id}
               />
             ))}
           </div>
