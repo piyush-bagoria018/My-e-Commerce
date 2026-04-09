@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import Product from "../models/product.model.js";
 import Order from "../models/order.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/Cloudinary.js";
+import { syncProductPrice, normalizePrice } from "../utils/priceSync.js";
 
 const toNumberOrThrow = (value, fieldName) => {
     const parsed = Number(value);
@@ -54,6 +55,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 export const createProduct = asyncHandler(async (req, res) => {
     const { name, description, price, category, stock, isFeatured, ratings } = req.body;
     let productImages = [];
+    const normalizedPrice = normalizePrice(price, "price");
 
     if (req.files && req.files.length > 0) {
         for (const file of req.files) {
@@ -65,13 +67,15 @@ export const createProduct = asyncHandler(async (req, res) => {
     const product = new Product({
         name,
         description,
-        price,
+        price: normalizedPrice,
         category,
         stock,
         productImages,
         isFeatured,
         ratings,
     });
+
+    syncProductPrice(product, normalizedPrice);
 
     await product.save();
     res.status(201).json(new ApiResponse(201, product, "Product created successfully"));
@@ -81,6 +85,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 export const updateProduct = asyncHandler(async (req, res) => {
     const { name, description, price, category, stock, isFeatured, ratings } = req.body;
     let productImages = req.body.productImages || [];
+    const normalizedPrice = typeof price !== "undefined" ? normalizePrice(price, "price") : undefined;
 
     if (req.files && req.files.length > 0) {
         for (const file of req.files) {
@@ -95,12 +100,8 @@ export const updateProduct = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Product not found");
     }
 
-    if (typeof price !== "undefined") {
-        const parsedPrice = toNumberOrThrow(price, "price");
-        if (parsedPrice !== product.price) {
-            product.priceHistory.push({ date: new Date(), price: parsedPrice });
-        }
-        product.price = parsedPrice;
+    if (typeof normalizedPrice !== "undefined") {
+        syncProductPrice(product, normalizedPrice);
     }
 
     if (typeof name !== "undefined") product.name = name;

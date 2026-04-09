@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/AsyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/Cloudinary.js';
+import { syncProductPrice, normalizePrice } from '../utils/priceSync.js';
 
 const toNumberOrThrow = (value, fieldName) => {
   const parsed = Number(value);
@@ -22,6 +23,7 @@ const toBooleanOrThrow = (value, fieldName) => {
 export const createProduct = asyncHandler(async (req, res, next) => {
   const { name, description, price, category, stock, isFeatured, ratings } = req.body;
   let productImages = [];
+  const normalizedPrice = normalizePrice(price, 'price');
 
   if (req.files && req.files.length > 0) {
     for (const file of req.files) {
@@ -33,14 +35,15 @@ export const createProduct = asyncHandler(async (req, res, next) => {
   const product = new Product({
     name,
     description,
-    price,
+    price: normalizedPrice,
     category,
     stock,
     productImages,
     isFeatured,
     ratings,
-    priceHistory: [{ date: new Date(), price }], // Initialize price history
   });
+
+  syncProductPrice(product, normalizedPrice);
 
   await product.save();
   res.status(201).json(new ApiResponse(201, product, "Product created successfully"));
@@ -62,6 +65,7 @@ export const getProductById = asyncHandler(async (req, res, next) => {
 export const updateProduct = asyncHandler(async (req, res, next) => {
   const { name, description, price, category, stock, isFeatured, ratings } = req.body;
   let productImages = req.body.productImages || [];
+  const normalizedPrice = typeof price !== 'undefined' ? normalizePrice(price, 'price') : undefined;
 
   if (req.files && req.files.length > 0) {
     for (const file of req.files) {
@@ -76,12 +80,8 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
   }
 
   // Update price history only if the price has changed
-  if (typeof price !== 'undefined') {
-    const parsedPrice = toNumberOrThrow(price, 'price');
-    if (parsedPrice !== product.price) {
-      product.priceHistory.push({ date: new Date(), price: parsedPrice });
-    }
-    product.price = parsedPrice;
+  if (typeof normalizedPrice !== 'undefined') {
+    syncProductPrice(product, normalizedPrice);
   }
 
   if (typeof name !== 'undefined') product.name = name;
