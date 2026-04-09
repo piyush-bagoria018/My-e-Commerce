@@ -31,6 +31,9 @@ def fetch_training_data():
 # Fetch data
 df = fetch_training_data()
 
+if df.empty:
+    raise ValueError("Not enough price history data to train the model.")
+
 # Features and target
 X = df[["price", "average_price"]]
 y = df["drop_chance"]
@@ -43,7 +46,10 @@ model = LogisticRegression()
 model.fit(X_train, y_train)
 
 # Save the model
-with open("price_drop_model.pkl", "wb") as file:
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(SCRIPT_DIR, "price_drop_model.pkl")
+
+with open(MODEL_PATH, "wb") as file:
     pickle.dump(model, file)
 
 print("Model trained and saved successfully!")
