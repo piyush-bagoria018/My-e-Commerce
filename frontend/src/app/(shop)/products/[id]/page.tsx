@@ -457,19 +457,19 @@ export default function ProductDetailsPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={addingToCart || !inStock}
+                  disabled={!inStock}
                   className="rounded-md border border-border bg-surface px-6 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:text-muted"
                 >
-                  {addingToCart ? 'Processing...' : isInCart ? 'Remove from Cart' : 'Add to Cart'}
+                  {isInCart ? 'Remove from Cart' : 'Add to Cart'}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  disabled={addingToCart || !inStock}
+                  disabled={!inStock}
                   className="rounded-md bg-primary px-7 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
-                  {addingToCart ? 'Processing...' : 'Buy Now'}
+                  Buy Now
                 </button>
 
                 <button
