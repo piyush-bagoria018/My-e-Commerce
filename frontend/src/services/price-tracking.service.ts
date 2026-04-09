@@ -18,10 +18,10 @@ export async function createPriceAlert(data: {
 		`/price-tracking/${data.productId}/create-alert`,
 		{
 			method: 'POST',
-			body: JSON.stringify({
+			body: {
 				userEmail: data.userEmail,
 				targetPrice: data.targetPrice,
-			}),
+			},
 		}
 	);
 }

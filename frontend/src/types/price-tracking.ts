@@ -10,6 +10,7 @@ export type PriceHistory = {
 	highest_price: number;
 	lowest_price: number;
 	average_price: number;
+	currentPrice?: number;
 	graphData?: PriceHistoryPoint[];
 };
 
