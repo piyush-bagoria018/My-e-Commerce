@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Footer } from "@/components/common/Footer";
 import { Header } from "@/components/common/Header";
 import { TopBar } from "@/components/common/TopBar";
@@ -56,7 +56,6 @@ function normalizeCategory(input?: string) {
 
 export default function ProductsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -70,6 +69,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [searchParamsString, setSearchParamsString] = useState("");
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -149,6 +149,10 @@ export default function ProductsPage() {
   }, [products]);
 
   useEffect(() => {
+    setSearchParamsString(window.location.search);
+  }, []);
+
+  useEffect(() => {
     const searchQuery = searchParams.get("search") || "";
     const categoryQuery = searchParams.get("category") || "all";
 
@@ -163,7 +167,12 @@ export default function ProductsPage() {
       (item) => item.toLowerCase() === categoryQuery.toLowerCase()
     );
     setCategory(matchedCategory || "all");
-  }, [searchParams, categories]);
+  }, [searchParamsString, categories]);
+
+  const searchParams = useMemo(
+    () => new URLSearchParams(searchParamsString),
+    [searchParamsString]
+  );
 
   const filteredProducts = useMemo(() => {
     const searched = products.filter((product) => {

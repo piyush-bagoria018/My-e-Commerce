@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { loginUser } from "@/services/auth.service";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -30,18 +30,18 @@ function parseContactInput(rawValue: string) {
 
 export function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading, setUser } = useAuth();
 
   const [contact, setContact] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showRegisteredBanner, setShowRegisteredBanner] = useState(false);
 
-  const showRegisteredBanner = useMemo(
-    () => searchParams.get("registered") === "1",
-    [searchParams]
-  );
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    setShowRegisteredBanner(searchParams.get("registered") === "1");
+  }, []);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
