@@ -14,6 +14,11 @@ import { PriceInsightsPanel } from '@/components/product/PriceInsightsPanel';
 import { addToCart, getUserCart, removeFromCart } from '@/services/cart.service';
 import { getAllProducts, getProductById } from '@/services/product.service';
 import {
+  getAIAnalysis,
+  getPriceRecommendation,
+  type PriceTrackingAIAnalysis,
+} from '@/services/price-tracking.service';
+import {
   addToWishlist,
   getWishlist,
   removeFromWishlist,
@@ -79,6 +84,7 @@ export default function ProductDetailsPage() {
   const [selectedSize, setSelectedSize] = useState('M');
   const [selectedColor, setSelectedColor] = useState('#e4572e');
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [prefetchedAIAnalysis, setPrefetchedAIAnalysis] = useState<PriceTrackingAIAnalysis | null>(null);
 
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL'];
   const colorOptions = ['#5b6c7a', '#e4572e'];
@@ -150,6 +156,35 @@ export default function ProductDetailsPage() {
 
     loadStates();
   }, [authLoading, isAuthenticated, productId, user?._id]);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    let isCancelled = false;
+    setPrefetchedAIAnalysis(null);
+
+    const preloadCoreAndAI = async () => {
+      try {
+        // Warm recommendation path so popup core UI can render quickly.
+        await getPriceRecommendation(productId);
+
+        const aiResult = await getAIAnalysis(productId);
+        if (!isCancelled) {
+          setPrefetchedAIAnalysis(aiResult);
+        }
+      } catch {
+        if (!isCancelled) {
+          setPrefetchedAIAnalysis(null);
+        }
+      }
+    };
+
+    preloadCoreAndAI();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [productId]);
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -463,7 +498,7 @@ export default function ProductDetailsPage() {
                   {isInCart ? 'Remove from Cart' : 'Add to Cart'}
                 </button>
 
-                <button
+               <button
                   type="button"
                   onClick={handleBuyNow}
                   disabled={!inStock}
@@ -563,7 +598,11 @@ export default function ProductDetailsPage() {
               </button>
             </div>
 
-            <PriceInsightsPanel productId={product._id} className="mt-0" />
+            <PriceInsightsPanel
+              productId={product._id}
+              className="mt-0"
+              initialAIAnalysis={prefetchedAIAnalysis}
+            />
           </div>
         </div>
       ) : null}

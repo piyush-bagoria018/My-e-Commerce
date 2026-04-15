@@ -22,24 +22,16 @@ import {
   getAIAnalysis,
 } from "@/services/price-tracking.service";
 import type { PriceHistory, PriceRecommendation } from "@/types/price-tracking";
+import type { PriceTrackingAIAnalysis } from "@/services/price-tracking.service";
 import { PriceAlertForm } from "./PriceAlertForm";
 
 type PriceInsightsPanelProps = {
   productId: string;
   className?: string;
+  initialAIAnalysis?: PriceTrackingAIAnalysis | null;
 };
 
-type RangeFilter = "30d" | "90d" | "180d";
-
-type AIAnalysis = {
-  verdict: string;
-  dropProbability: number;
-  mlReason: string;
-  aiExplanation: string;
-  aiConfidence: string;
-  fairRange: { low: number; high: number };
-  currentPrice: number;
-};
+type RangeFilter = "30d" | "90d";
 
 ChartJS.register(
   CategoryScale,
@@ -147,36 +139,28 @@ function DropGauge({ value }: { value: number }) {
   );
 }
 
-function StatPill({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-center">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">
-        {label}
-      </p>
-      <p className={`mt-1 text-sm font-semibold ${accent}`}>{value}</p>
-    </div>
-  );
-}
-
 export function PriceInsightsPanel({
   productId,
   className,
+  initialAIAnalysis = null,
 }: PriceInsightsPanelProps) {
   const [recommendation, setRecommendation] =
     useState<PriceRecommendation | null>(null);
   const [historyData, setHistoryData] = useState<PriceHistory | null>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [aiAnalysis, setAiAnalysis] =
+    useState<PriceTrackingAIAnalysis | null>(initialAIAnalysis);
+  const [isAIAnalysisLoading, setIsAIAnalysisLoading] =
+    useState(!initialAIAnalysis);
   const [range, setRange] = useState<RangeFilter>("90d");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (initialAIAnalysis) {
+      setAiAnalysis(initialAIAnalysis);
+      setIsAIAnalysisLoading(false);
+    }
+  }, [initialAIAnalysis]);
 
   const chartModel = useMemo(() => {
     const source = historyData?.graphData?.length
@@ -187,7 +171,7 @@ export function PriceInsightsPanel({
     }
 
     const now = Date.now();
-    const rangeDays = range === "30d" ? 30 : range === "90d" ? 90 : 180;
+    const rangeDays = range === "30d" ? 30 : 90;
     const cutoffTime = now - rangeDays * 24 * 60 * 60 * 1000;
 
     const normalizedSource = source
@@ -340,11 +324,10 @@ export function PriceInsightsPanel({
       try {
         setLoading(true);
         setError("");
-        const [recommendationResult, historyResult, aiResult] =
+        const [recommendationResult, historyResult] =
           await Promise.allSettled([
             getPriceRecommendation(productId),
             getPriceHistory(productId),
-            getAIAnalysis(productId),
           ]);
 
         if (recommendationResult.status !== "fulfilled") {
@@ -356,9 +339,28 @@ export function PriceInsightsPanel({
           setHistoryData(
             historyResult.status === "fulfilled" ? historyResult.value : null
           );
-          setAiAnalysis(
-            aiResult.status === "fulfilled" ? aiResult.value : null
-          );
+        }
+
+        if (!initialAIAnalysis) {
+          if (!isCancelled) {
+            setIsAIAnalysisLoading(true);
+          }
+
+          getAIAnalysis(productId)
+            .then((aiResult) => {
+              if (!isCancelled) {
+                setAiAnalysis(aiResult);
+                setIsAIAnalysisLoading(false);
+              }
+            })
+            .catch(() => {
+              if (!isCancelled) {
+                setAiAnalysis(null);
+                setIsAIAnalysisLoading(false);
+              }
+            });
+        } else if (!isCancelled) {
+          setIsAIAnalysisLoading(false);
         }
       } catch (err) {
         if (!isCancelled) {
@@ -367,6 +369,7 @@ export function PriceInsightsPanel({
               ? err.message
               : "Failed to load price insights";
           setError(message);
+          setIsAIAnalysisLoading(false);
         }
       } finally {
         if (!isCancelled) {
@@ -431,7 +434,9 @@ export function PriceInsightsPanel({
   const gaugeValue = clamp(recommendation.dropProbability, 0, 100);
   const gaugeLabel =
     gaugeValue >= 70 ? "strong" : gaugeValue >= 40 ? "moderate" : "weak";
-  const liveInsight = aiAnalysis?.aiExplanation || recommendation.reason;
+  const liveInsight = isAIAnalysisLoading
+    ? "Analyzing price trends..."
+    : aiAnalysis?.aiExplanation || recommendation.reason;
   const normalizedInsight = liveInsight
     .replace(/lowest\s+ever/gi, "90-day low")
     .replace(/all[-\s]*time/gi, "90-day");
@@ -532,7 +537,9 @@ export function PriceInsightsPanel({
                   className="h-5 w-5 object-contain"
                 />
               </div>
-              <p className="text-sm leading-relaxed text-[#f1efe7]">
+              <p
+                className={`text-sm leading-relaxed ${isAIAnalysisLoading ? "animate-pulse text-[#f1efe7]/80" : "text-[#f1efe7]"}`}
+              >
                 {normalizedInsight}
               </p>
             </div>
@@ -651,10 +658,12 @@ export function PriceInsightsPanel({
             <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
               Price History
             </p>
-            <p className="mt-1 text-sm text-[#d8d4cb]/80">90-day trend</p>
+            <p className="mt-1 text-sm text-[#d8d4cb]/80">
+              {range === "30d" ? "30-day trend" : "90-day trend"}
+            </p>
           </div>
           <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 p-1">
-            {(["30d", "90d", "180d"] as RangeFilter[]).map((item) => (
+            {(["30d", "90d"] as RangeFilter[]).map((item) => (
               <button
                 key={item}
                 type="button"

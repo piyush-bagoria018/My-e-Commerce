@@ -1,6 +1,16 @@
 import { apiRequest } from "@/config/api";
 import type { PriceHistory, PriceRecommendation } from "@/types/price-tracking";
 
+export type PriceTrackingAIAnalysis = {
+	verdict: string;
+	dropProbability: number;
+	mlReason: string;
+	aiExplanation: string;
+	aiConfidence: string;
+	fairRange: { low: number; high: number };
+	currentPrice: number;
+};
+
 export async function getPriceRecommendation(productId: string): Promise<PriceRecommendation> {
 	return apiRequest<PriceRecommendation>(`/price-tracking/${productId}/drop-chance`);
 }
@@ -26,16 +36,8 @@ export async function createPriceAlert(data: {
 	);
 }
 
-export async function getAIAnalysis(productId: string): Promise<{
-verdict: string;
-dropProbability: number;
-mlReason: string;
-aiExplanation: string;
-aiConfidence: string;
-fairRange: { low: number; high: number };
-currentPrice: number;
-}> {
-return apiRequest(
-`/price-tracking/${productId}/ai-analysis`
-);
+export async function getAIAnalysis(productId: string): Promise<PriceTrackingAIAnalysis> {
+	return apiRequest(
+		`/price-tracking/${productId}/ai-analysis`
+	);
 }
