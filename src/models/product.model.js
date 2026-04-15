@@ -46,6 +46,21 @@ const productSchema = new mongoose.Schema({
         min: 0,
         max: 5
     },
+    aiCache: {
+        explanation: { type: String, default: '' },
+        confidence: { type: String, default: '' },
+        cachedAt: { type: Date, default: null },
+        analysis: {
+            verdict: { type: String, default: '' },
+            dropProbability: { type: Number, default: 0 },
+            mlReason: { type: String, default: '' },
+            fairRange: {
+                low: { type: Number, default: 0 },
+                high: { type: Number, default: 0 },
+            },
+            currentPrice: { type: Number, default: 0 },
+        },
+    },
     slug: {
         type: String,
         unique: true

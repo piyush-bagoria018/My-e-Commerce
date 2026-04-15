@@ -1,6 +1,5 @@
 import express from "express";
 import { getPriceHistory, checkPriceDropChance, createAlert, getUserAlerts, getAIAnalysis } from "../controllers/priceTracking.controller.js";
-import { verifyJWT } from "../middlewares/auth.middlerware.js";
 
 const router = express.Router();
 

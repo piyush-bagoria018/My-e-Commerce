@@ -11,6 +11,9 @@ import { generatePriceAnalysis } from "../utils/priceAnalysis.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const AI_CACHE_TTL_MS = 60 * 60 * 1000;
+const RECOMMENDATION_CACHE_TTL_MS = 2 * 60 * 1000;
+const recommendationCache = new Map();
 
 // Helper function to execute Python scripts
 const runPythonScript = (scriptName, args = []) => {
@@ -67,6 +70,51 @@ const buildLiveGraphData = (priceHistory = [], currentPrice) => {
   return graphData;
 };
 
+const buildHistoryResultFromProduct = (product) => {
+  const normalizedHistory = (product.priceHistory || [])
+    .map((entry) => ({
+      date: entry?.date ? new Date(entry.date).toISOString() : null,
+      price: Number(entry?.price),
+    }))
+    .filter((entry) => entry.date && Number.isFinite(entry.price));
+
+  if (!normalizedHistory.length) {
+    return null;
+  }
+
+  const prices = normalizedHistory.map((entry) => entry.price);
+  const highestPrice = Math.max(...prices);
+  const lowestPrice = Math.min(...prices);
+  const averagePrice = prices.reduce((sum, value) => sum + value, 0) / prices.length;
+
+  return {
+    history: normalizedHistory,
+    highest_price: highestPrice,
+    lowest_price: lowestPrice,
+    average_price: averagePrice,
+    current_price: Number(product.price ?? normalizedHistory[normalizedHistory.length - 1].price),
+  };
+};
+
+const getCachedRecommendation = (productId) => {
+  const cached = recommendationCache.get(productId);
+  if (!cached) return null;
+
+  if (Date.now() - cached.timestamp > RECOMMENDATION_CACHE_TTL_MS) {
+    recommendationCache.delete(productId);
+    return null;
+  }
+
+  return cached.value;
+};
+
+const setCachedRecommendation = (productId, recommendation) => {
+  recommendationCache.set(productId, {
+    value: recommendation,
+    timestamp: Date.now(),
+  });
+};
+
 // Get price history, graph data, and stats
 export const getPriceHistory = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -77,7 +125,10 @@ export const getPriceHistory = asyncHandler(async (req, res) => {
       throw new ApiError(404, "Product not found");
     }
 
-    const result = await runPythonScript("get_price_history.py", [productId]);
+    const result = buildHistoryResultFromProduct(product);
+    if (!result) {
+      throw new ApiError(400, "Price history not found for this product");
+    }
 
     // Include live current price as the latest chart point so the trend ends on today's visible price
     result.graphData = buildLiveGraphData(product.priceHistory, product.price);
@@ -95,13 +146,21 @@ export const checkPriceDropChance = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
   try {
+    const cachedRecommendation = getCachedRecommendation(productId);
+    if (cachedRecommendation) {
+      return res.status(200).json(new ApiResponse(200, cachedRecommendation, "Recommendation generated (cache hit)"));
+    }
+
     const product = await Product.findById(productId).select("price priceHistory");
     if (!product) {
       throw new ApiError(404, "Product not found");
     }
 
     const dropChanceResult = await runPythonScript("check_price_drop_chance.py", [productId]);
-    const historyResult = await runPythonScript("get_price_history.py", [productId]);
+    const historyResult = buildHistoryResultFromProduct(product);
+    if (!historyResult?.history || historyResult.history.length === 0) {
+      throw new ApiError(400, "Insufficient price history for recommendation");
+    }
 
     // Extract key values
     const dropProbability = parseFloat(dropChanceResult.drop_chance); // e.g., 73.45 from "73.45%"
@@ -151,6 +210,8 @@ export const checkPriceDropChance = asyncHandler(async (req, res) => {
       },
       currentPrice: Math.round(currentPrice),
     };
+
+    setCachedRecommendation(productId, recommendation);
 
     res.status(200).json(new ApiResponse(200, recommendation, "Recommendation generated"));
   } catch (error) {
@@ -221,14 +282,52 @@ export const getAIAnalysis = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
   try {
-    const product = await Product.findById(productId).select("name price priceHistory");
+    const product = await Product.findById(productId).select("name price priceHistory aiCache");
     if (!product) {
       throw new ApiError(404, "Product not found");
     }
 
+    const cachedAt = product.aiCache?.cachedAt ? new Date(product.aiCache.cachedAt).getTime() : null;
+    const cachedAnalysis = product.aiCache?.analysis;
+    const hasFreshCache = cachedAt && Date.now() - cachedAt < AI_CACHE_TTL_MS;
+
+    if (
+      hasFreshCache
+      && cachedAnalysis
+      && cachedAnalysis.verdict
+      && Number.isFinite(cachedAnalysis.dropProbability)
+    ) {
+      const analysis = {
+        verdict: cachedAnalysis.verdict,
+        dropProbability: cachedAnalysis.dropProbability,
+        mlReason: cachedAnalysis.mlReason,
+        aiExplanation: product.aiCache.explanation,
+        aiConfidence: product.aiCache.confidence,
+        fairRange: {
+          low: cachedAnalysis.fairRange?.low,
+          high: cachedAnalysis.fairRange?.high,
+        },
+        currentPrice: cachedAnalysis.currentPrice,
+      };
+
+      setCachedRecommendation(productId, {
+        verdict: analysis.verdict,
+        reason: analysis.aiExplanation || `${analysis.dropProbability}% drop probability`,
+        confidence: analysis.aiConfidence || "medium",
+        dropProbability: analysis.dropProbability,
+        fairRange: {
+          low: analysis.fairRange?.low,
+          high: analysis.fairRange?.high,
+        },
+        currentPrice: analysis.currentPrice,
+      });
+
+      return res.status(200).json(new ApiResponse(200, analysis, "AI analysis fetched from cache"));
+    }
+
     // Fetch ML prediction and history stats
     const dropChanceResult = await runPythonScript("check_price_drop_chance.py", [productId]);
-    const historyResult = await runPythonScript("get_price_history.py", [productId]);
+    const historyResult = buildHistoryResultFromProduct(product);
 
     if (!historyResult?.history || historyResult.history.length === 0) {
       throw new ApiError(400, "Insufficient price history for AI analysis");
@@ -280,6 +379,36 @@ export const getAIAnalysis = asyncHandler(async (req, res) => {
       },
       currentPrice: Math.round(currentPrice),
     };
+
+    setCachedRecommendation(productId, {
+      verdict: analysis.verdict,
+      reason: analysis.mlReason,
+      confidence: analysis.aiConfidence || "medium",
+      dropProbability: analysis.dropProbability,
+      fairRange: {
+        low: analysis.fairRange.low,
+        high: analysis.fairRange.high,
+      },
+      currentPrice: analysis.currentPrice,
+    });
+
+    product.aiCache = {
+      explanation: analysis.aiExplanation,
+      confidence: analysis.aiConfidence,
+      cachedAt: new Date(),
+      analysis: {
+        verdict: analysis.verdict,
+        dropProbability: analysis.dropProbability,
+        mlReason: analysis.mlReason,
+        fairRange: {
+          low: analysis.fairRange.low,
+          high: analysis.fairRange.high,
+        },
+        currentPrice: analysis.currentPrice,
+      },
+    };
+
+    await product.save();
 
     res.status(200).json(new ApiResponse(200, analysis, "AI analysis generated successfully"));
   } catch (error) {
