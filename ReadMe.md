@@ -296,9 +296,19 @@ Backend: http://localhost:4000
 - Frontend API client includes credentials and auto-refresh behavior.
 - Admin routes are protected by JWT + admin role middleware.
 
+## Deployment Notes
+- Frontend is deployed on Vercel: https://my-e-commerce-green.vercel.app
+- Backend is deployed on Render: https://my-e-commerce-tmtg.onrender.com
+- Vercel root directory should be set to `frontend/`.
+- Render build command: `npm install && pip install -r requirements.txt`
+- Render start command: `node src/index.js`
+- Production frontend API base URL: `https://my-e-commerce-tmtg.onrender.com/api/v1`
+- Price intelligence requires the Python packages listed in `requirements.txt` and a valid `GEMINI_API_KEY`.
+
 ## Current Status
 - Core product flow is complete and working end to end.
 - Price intelligence pipeline is integrated (Node + Python + AI + email).
+- The app is deployed and working in production on Vercel and Render.
 - No automated test suite is currently configured in repository scripts.
 
 ## Contributing
