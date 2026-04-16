@@ -76,14 +76,14 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 	};
 
 	return (
-		<div className="rounded-[22px] border border-white/10 bg-[#2b2b2b] p-4 text-[#f6f3ec] shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]">
-			<p className="text-xs uppercase tracking-[0.22em] text-[#d8d4cb]/75">Price Alert</p>
-			<p className="mt-2 text-sm text-[#efece4]">Set your target and we’ll notify you the moment the price drops below it.</p>
+		<div className="rounded-[22px] border border-white/10 bg-[#2b2b2b] p-3.5 text-[#f6f3ec] shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)] sm:p-4">
+			<p className="text-[11px] uppercase tracking-[0.18em] text-[#d8d4cb]/75 sm:text-xs sm:tracking-[0.22em]">Price Alert</p>
+			<p className="mt-2 text-[13px] text-[#efece4] sm:text-sm">Set your target and we’ll notify you the moment the price drops below it.</p>
 
-			<form onSubmit={handleSubmit} className="mt-3 space-y-3">
+			<form onSubmit={handleSubmit} className="mt-3 space-y-2.5 sm:space-y-3">
 				{/* Email Input */}
 				<div>
-					<label htmlFor="alert-email" className="block text-xs font-medium text-[#f6f3ec]">
+					<label htmlFor="alert-email" className="block text-[11px] font-medium text-[#f6f3ec] sm:text-xs">
 						Email
 					</label>
 					<input
@@ -99,9 +99,9 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 
 				{/* Target Price Input */}
 				<div>
-					<label htmlFor="alert-price" className="block text-xs font-medium text-[#f6f3ec]">
+					<label htmlFor="alert-price" className="block text-[11px] font-medium text-[#f6f3ec] sm:text-xs">
 						Target Price (Rs)
-						<span className="float-right text-[#d8d4cb]/70">Current: Rs {currentPrice.toLocaleString('en-IN')}</span>
+						<span className="mt-1 block text-[#d8d4cb]/70 sm:float-right sm:mt-0 sm:inline">Current: Rs {currentPrice.toLocaleString('en-IN')}</span>
 					</label>
 					<input
 						id="alert-price"
@@ -114,7 +114,7 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 						max={currentPrice - 1}
 						className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#1f1f1f] px-3 py-2.5 text-sm text-[#f6f3ec] placeholder:text-[#9c9587] transition focus:border-[#78cbb6] focus:outline-none disabled:opacity-50"
 					/>
-					<p className="mt-1 text-xs text-[#d8d4cb]/70">
+					<p className="mt-1 text-[11px] text-[#d8d4cb]/70 sm:text-xs">
 						You’ll save: <span className="font-semibold text-[#86e3c8]">Rs {(currentPrice - targetPrice).toLocaleString('en-IN')}</span>
 					</p>
 				</div>
@@ -123,7 +123,7 @@ export function PriceAlertForm({ productId, currentPrice, onAlertCreated }: Pric
 				<button
 					type="submit"
 					disabled={state === 'loading' || state === 'success'}
-					className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition ${
+					className={`w-full rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
 						state === 'success'
 							? 'bg-[#dff5ee] text-[#1f5449]'
 							: state === 'loading'

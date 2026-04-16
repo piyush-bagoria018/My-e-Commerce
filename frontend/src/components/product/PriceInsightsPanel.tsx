@@ -52,27 +52,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function getConfidenceTone(confidence: string) {
-  if (confidence === "high") {
-    return {
-      badge: "bg-[#dff5ee] text-[#1f5449] border-[#8fd4bf]",
-      bar: "bg-[#5fd0b8]",
-    };
-  }
-
-  if (confidence === "medium") {
-    return {
-      badge: "bg-[#f5eedb] text-[#7f5417] border-[#e7c37c]",
-      bar: "bg-[#f0b64d]",
-    };
-  }
-
-  return {
-    badge: "bg-[#efdfdf] text-[#8a4747] border-[#e0b3b3]",
-    bar: "bg-[#dd8c8c]",
-  };
-}
-
 function getVerdictTint(verdict: string) {
   if (verdict.toLowerCase().includes("buy")) {
     return {
@@ -420,7 +399,6 @@ export function PriceInsightsPanel({
   }
 
   const verdictTone = getVerdictTint(recommendation.verdict);
-  const confidenceTone = getConfidenceTone(recommendation.confidence || "low");
   const currentPrice = recommendation.currentPrice;
   const averagePrice = historyData?.average_price ?? currentPrice;
   const lowestPrice = historyData?.lowest_price ?? currentPrice;
@@ -432,8 +410,6 @@ export function PriceInsightsPanel({
     ? ((currentPrice - lowestPrice) / Math.max(lowestPrice, 1)) * 100
     : 0;
   const gaugeValue = clamp(recommendation.dropProbability, 0, 100);
-  const gaugeLabel =
-    gaugeValue >= 70 ? "strong" : gaugeValue >= 40 ? "moderate" : "weak";
   const liveInsight = isAIAnalysisLoading
     ? "Analyzing price trends..."
     : aiAnalysis?.aiExplanation || recommendation.reason;
@@ -489,32 +465,27 @@ export function PriceInsightsPanel({
     <div
       className={`rounded-[28px] border border-white/10 bg-[#232323] p-4.5 text-[#f6f3ec] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.75)] sm:p-5 ${className || "mt-6"}`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.28em] text-[#d8d4cb]/65">
+      <div className="mb-4 flex items-center gap-3">
+        <p className="text-[11px] uppercase tracking-[0.22em] text-[#d8d4cb]/65 sm:text-xs sm:tracking-[0.28em]">
           Price Intelligence
         </p>
-        <span
-          className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${confidenceTone.badge}`}
-        >
-          Signal: {recommendation.confidence}
-        </span>
       </div>
 
       <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-4.5 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[#d8d4cb]/65 sm:text-[11px] sm:tracking-[0.2em]">
                 Current Price
               </p>
-              <div className="mt-1 flex flex-wrap items-end gap-2.5">
-                <p className="text-[2.7rem] font-semibold leading-none tracking-tight text-[#f7f2e8] sm:text-[3rem]">
+              <div className="mt-1.5 flex flex-wrap items-end gap-2.5">
+                <p className="max-w-full text-[2.2rem] font-semibold leading-none tracking-tight text-[#f7f2e8] sm:text-[2.7rem] lg:text-[3rem]">
                   {formatRs(currentPrice)}
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-1.5 pt-1 text-right">
+            <div className="flex w-full flex-row flex-wrap items-center gap-2 pt-1 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:gap-1.5 sm:text-right">
               <span
                 className={`rounded-full px-4.5 py-2 text-sm font-semibold leading-none ${verdictTone.pill}`}
               >
@@ -526,8 +497,8 @@ export function PriceInsightsPanel({
             </div>
           </div>
 
-          <div className="mt-5 rounded-[22px] border border-white/10 bg-[#171717] p-4">
-            <div className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/5 p-3.25">
+          <div className="mt-4 rounded-[22px] border border-white/10 bg-[#171717] p-3.5 sm:mt-5 sm:p-4">
+            <div className="flex items-start gap-2.5 rounded-[18px] border border-white/10 bg-white/5 p-2.75 sm:gap-3 sm:p-3.25">
               <div className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#dff5ee] text-[#1f5449]">
                 <Image
                   src="/Copilot_20260405_163707.png"
@@ -538,14 +509,14 @@ export function PriceInsightsPanel({
                 />
               </div>
               <p
-                className={`text-sm leading-relaxed ${isAIAnalysisLoading ? "animate-pulse text-[#f1efe7]/80" : "text-[#f1efe7]"}`}
+                className={`text-[13px] leading-relaxed sm:text-sm ${isAIAnalysisLoading ? "animate-pulse text-[#f1efe7]/80" : "text-[#f1efe7]"}`}
               >
                 {normalizedInsight}
               </p>
             </div>
 
-            <div className="mt-10 min-h-29.5 rounded-[18px] border border-white/10 bg-[#111111] p-4">
-              <div className="grid min-h-20.5 grid-cols-3 items-stretch gap-3">
+            <div className="mt-7 min-h-29.5 rounded-[18px] border border-white/10 bg-[#111111] p-3.5 sm:mt-10 sm:p-4">
+              <div className="grid min-h-20.5 grid-cols-3 items-stretch gap-2.5 sm:gap-3">
                 <div className="flex h-full flex-col justify-start text-left">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-[#d8d4cb]/55">
                     90d Low
@@ -577,12 +548,12 @@ export function PriceInsightsPanel({
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4.5 sm:p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4 sm:p-5">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[#d8d4cb]/65 sm:text-xs sm:tracking-[0.2em]">
             Drop Signal
           </p>
           <DropGauge value={gaugeValue} />
-          <div className="-mt-1.5 text-center">
+          <div className="-mt-1 text-center">
             <p className="text-[2rem] font-semibold text-[#f7f2e8]">
               {Math.round(gaugeValue)}%
             </p>
@@ -632,19 +603,6 @@ export function PriceInsightsPanel({
                   style={{
                     width: `${clamp(Math.abs(priceVsLow) * 5, 18, 100)}%`,
                   }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-[12px] text-[#d8d4cb]/75">
-                <span>model confidence</span>
-                <span className="capitalize text-[#f7f2e8]">{gaugeLabel}</span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full rounded-full ${confidenceTone.bar}`}
-                  style={{ width: `${clamp(gaugeValue, 28, 100)}%` }}
                 />
               </div>
             </div>
@@ -718,7 +676,7 @@ export function PriceInsightsPanel({
         )}
       </div>
 
-      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-[28px] border border-white/10 bg-[#232323] p-3.5 sm:p-4.5">
           <p className="text-xs uppercase tracking-[0.2em] text-[#d8d4cb]/65">
             Fair Price Range
@@ -734,12 +692,12 @@ export function PriceInsightsPanel({
                 style={{ left: `calc(${markerLeft}% - 10px)` }}
               />
             </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-[#f6f3ec]">
-              <span>{formatRs(fairLow)}</span>
-              <span className="font-semibold text-[#78cbb6]">
+            <div className="mt-3 flex items-center justify-between text-xs text-[#f6f3ec] sm:text-sm">
+              <span className="min-w-0">{formatRs(fairLow)}</span>
+              <span className="px-1 text-center font-semibold text-[#78cbb6]">
                 {formatRs(currentPrice)} now
               </span>
-              <span>{formatRs(fairHigh)}</span>
+              <span className="min-w-0 text-right">{formatRs(fairHigh)}</span>
             </div>
           </div>
           <div className="mt-3.5 rounded-[20px] border border-white/8 bg-white/5 p-3 text-sm text-[#efece4]">
